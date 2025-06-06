@@ -5,6 +5,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -17,15 +19,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseUser
 import com.promptflow.android.viewmodel.AuthenticationViewModel
 import com.promptflow.android.viewmodel.SavedText
 import com.promptflow.android.viewmodel.TextLibraryViewModel
+import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +50,6 @@ fun SettingsScreen(
     authViewModel: AuthenticationViewModel = viewModel(),
     textLibraryViewModel: TextLibraryViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val authState by authViewModel.authState.collectAsState()
     val textLibraryState by textLibraryViewModel.state.collectAsState()
 
@@ -52,87 +57,121 @@ fun SettingsScreen(
     var showSaveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf<SavedText?>(null) }
 
+    // Detect screen configuration for adaptive layout
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val screenWidth = configuration.screenWidthDp.dp
+    val isTablet = screenWidth > 600.dp
+
     val tabs = listOf(
-        "Text Editor" to Icons.Default.Edit,
-        "Defaults" to Icons.Default.Settings,
-        "Library" to Icons.Default.LibraryBooks,
-        "Account" to Icons.Default.Person
+        "Editor" to Icons.Default.Edit,
+        "Ajustes" to Icons.Default.Settings,
+        "Biblioteca" to Icons.Default.LibraryBooks,
+        "Cuenta" to Icons.Default.AccountCircle
     )
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = onBackPressed) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            // Adaptive TopAppBar - compact for landscape tablets
+            if (isTablet && isLandscape) {
+                // Compact TopAppBar for horizontal layout
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp), // Reduced height for horizontal
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 3.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = onBackPressed,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ArrowBack,
+                                contentDescription = "Volver",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Configuración",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
-                },
-                actions = {
-                    if (selectedTab == 2) { // Library tab - allow adding texts both for logged and non-logged users
-                        IconButton(onClick = { showSaveDialog = true }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add Text")
+                }
+            } else {
+                // Standard TopAppBar for portrait
+                TopAppBar(
+                    title = { Text("Configuración") },
+                    navigationIcon = {
+                        IconButton(onClick = onBackPressed) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }
-                }
-            )
+                )
+            }
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Tab Row
-            TabRow(selectedTabIndex = selectedTab) {
-                tabs.forEachIndexed { index, (title, icon) ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { Text(title) },
-                        icon = { Icon(icon, contentDescription = title) }
-                    )
-                }
-            }
-
-            // Tab Content
-            when (selectedTab) {
-                0 -> TextEditorTab(
-                    currentText = currentText,
-                    onTextChanged = onTextChanged
-                )
-                1 -> DefaultsTab(
-                    currentSpeed = currentSpeed,
-                    onSpeedChanged = onSpeedChanged,
-                    currentFontSize = currentFontSize,
-                    onFontSizeChanged = onFontSizeChanged
-                )
-                2 -> LibraryTab(
-                    user = user,
-                    textLibraryState = textLibraryState,
-                    onTextSelected = onTextSelected,
-                    onDeleteText = { showDeleteDialog = it },
-                    textLibraryViewModel = textLibraryViewModel,
-                    onShowSaveDialog = { showSaveDialog = true }
-                )
-                3 -> AccountTab(
-                    user = user,
-                    authState = authState,
-                    authViewModel = authViewModel,
-                    onLoginRequest = {
-                        println("🔵 Login request received in SettingsScreen")
-                        authViewModel.signInWithGoogle(context)
-                    },
-                    onLogoutRequest = {
-                        authViewModel.signOut()
-                        onLogoutRequest()
-                    }
-                )
-            }
+        // Adaptive layout based on screen size and orientation
+        if (isTablet && isLandscape) {
+            // Tablet landscape - side navigation
+            TabletLandscapeLayout(
+                tabs = tabs,
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                paddingValues = paddingValues,
+                currentText = currentText,
+                onTextChanged = onTextChanged,
+                currentSpeed = currentSpeed,
+                onSpeedChanged = onSpeedChanged,
+                currentFontSize = currentFontSize,
+                onFontSizeChanged = onFontSizeChanged,
+                user = user,
+                textLibraryState = textLibraryState,
+                onTextSelected = onTextSelected,
+                onDeleteText = { showDeleteDialog = it },
+                textLibraryViewModel = textLibraryViewModel,
+                onShowSaveDialog = { showSaveDialog = true },
+                authState = authState,
+                authViewModel = authViewModel,
+                onLoginRequest = onLoginRequest,
+                onLogoutRequest = onLogoutRequest
+            )
+        } else {
+            // Phone or tablet portrait - traditional tab layout
+            TraditionalTabLayout(
+                tabs = tabs,
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                paddingValues = paddingValues,
+                currentText = currentText,
+                onTextChanged = onTextChanged,
+                currentSpeed = currentSpeed,
+                onSpeedChanged = onSpeedChanged,
+                currentFontSize = currentFontSize,
+                onFontSizeChanged = onFontSizeChanged,
+                user = user,
+                textLibraryState = textLibraryState,
+                onTextSelected = onTextSelected,
+                onDeleteText = { showDeleteDialog = it },
+                textLibraryViewModel = textLibraryViewModel,
+                onShowSaveDialog = { showSaveDialog = true },
+                authState = authState,
+                authViewModel = authViewModel,
+                onLoginRequest = onLoginRequest,
+                onLogoutRequest = onLogoutRequest
+            )
         }
     }
 
-    // Save Text Dialog
+    // Dialogs
     if (showSaveDialog) {
         SaveTextDialog(
             onSave = { title, content ->
@@ -143,28 +182,692 @@ fun SettingsScreen(
         )
     }
 
-    // Delete Confirmation Dialog
     showDeleteDialog?.let { textToDelete ->
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Delete Text") },
-            text = { Text("Are you sure you want to delete '${textToDelete.title}'?") },
+            title = { Text("Eliminar Texto") },
+            text = { Text("¿Estás seguro de que quieres eliminar '${textToDelete.title}'?") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        textLibraryViewModel.deleteText(textToDelete.id)
-                        showDeleteDialog = null
-                    }
-                ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = {
+                    textLibraryViewModel.deleteText(textToDelete.id)
+                    showDeleteDialog = null
+                }) {
+                    Text("Eliminar")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("Cancel")
+                    Text("Cancelar")
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun TabletLandscapeLayout(
+    tabs: List<Pair<String, androidx.compose.ui.graphics.vector.ImageVector>>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    paddingValues: PaddingValues,
+    currentText: String,
+    onTextChanged: (String) -> Unit,
+    currentSpeed: Float,
+    onSpeedChanged: (Float) -> Unit,
+    currentFontSize: Float,
+    onFontSizeChanged: (Float) -> Unit,
+    user: FirebaseUser?,
+    textLibraryState: com.promptflow.android.viewmodel.TextLibraryState,
+    onTextSelected: (String) -> Unit,
+    onDeleteText: (SavedText) -> Unit,
+    textLibraryViewModel: TextLibraryViewModel,
+    onShowSaveDialog: () -> Unit,
+    authState: com.promptflow.android.viewmodel.AuthState,
+    authViewModel: AuthenticationViewModel,
+    onLoginRequest: () -> Unit,
+    onLogoutRequest: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(4.dp) // Reduced overall padding
+    ) {
+        // Enhanced side navigation - bigger and better proportioned
+        Card(
+            modifier = Modifier
+                .width(140.dp) // Increased from 120dp to 140dp for longer text
+                .fillMaxHeight()
+                .padding(4.dp), // Reduced padding
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp), // Reduced from 12dp to 8dp
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                tabs.forEachIndexed { index, (title, icon) ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(90.dp) // Increased to 90dp for 2-line text
+                            .clickable { onTabSelected(index) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (selectedTab == index)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant,
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = if (selectedTab == index) 6.dp else 2.dp
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(6.dp), // Reduced to 6dp for more space
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                icon,
+                                contentDescription = title,
+                                modifier = Modifier.size(24.dp), // Reduced to 24dp
+                                tint = if (selectedTab == index)
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp)) // Reduced to 4dp
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 2, // Allow 2 lines for longer text
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                color = if (selectedTab == index)
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 10.sp // Reduced to 10sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Content area - optimized spacing and full utilization
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 8.dp, end = 4.dp, top = 0.dp, bottom = 0.dp) // Removed top/bottom padding
+        ) {
+            when (selectedTab) {
+                0 -> TextEditorTabHorizontal(
+                    currentText = currentText,
+                    onTextChanged = onTextChanged
+                )
+                1 -> DefaultsTabHorizontal(
+                    currentSpeed = currentSpeed,
+                    onSpeedChanged = onSpeedChanged,
+                    currentFontSize = currentFontSize,
+                    onFontSizeChanged = onFontSizeChanged
+                )
+                2 -> LibraryTabHorizontal(
+                    user = user,
+                    textLibraryState = textLibraryState,
+                    onTextSelected = onTextSelected,
+                    onDeleteText = onDeleteText,
+                    textLibraryViewModel = textLibraryViewModel,
+                    onShowSaveDialog = onShowSaveDialog
+                )
+                3 -> AccountTabHorizontal(
+                    user = user,
+                    authState = authState,
+                    authViewModel = authViewModel,
+                    onLoginRequest = onLoginRequest,
+                    onLogoutRequest = onLogoutRequest
+                )
+            }
+        }
+    }
+}
+
+// Optimized horizontal layouts for each tab
+@Composable
+private fun TextEditorTabHorizontal(
+    currentText: String,
+    onTextChanged: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Compact header
+        Text(
+            text = "Editor de Texto del Teleprompter",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // Maximized text area
+        OutlinedTextField(
+            value = currentText,
+            onValueChange = onTextChanged,
+            modifier = Modifier.fillMaxSize(),
+            placeholder = { Text("Escribe aquí el texto de tu teleprompter...") },
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.3f
+            )
+        )
+    }
+}
+
+@Composable
+private fun DefaultsTabHorizontal(
+    currentSpeed: Float,
+    onSpeedChanged: (Float) -> Unit,
+    currentFontSize: Float,
+    onFontSizeChanged: (Float) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp), // Reduced from 16dp to 8dp
+        horizontalArrangement = Arrangement.spacedBy(16.dp) // Reduced from 24dp to 16dp
+    ) {
+        // Speed Setting - Left column
+        Card(
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp).fillMaxSize(), // Reduced from 20dp to 12dp
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text(
+                    text = "Velocidad por Defecto",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "${currentSpeed.toInt()}x",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Slider(
+                    value = currentSpeed,
+                    onValueChange = onSpeedChanged,
+                    valueRange = 1f..25f,
+                    steps = 23
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("1x", style = MaterialTheme.typography.bodySmall)
+                    Text("25x", style = MaterialTheme.typography.bodySmall)
+                }
+
+                // Quick preset buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    listOf(5f, 8f, 12f, 15f, 20f).forEach { speed ->
+                        FilledTonalButton(
+                            onClick = { onSpeedChanged(speed) },
+                            modifier = Modifier.size(40.dp),
+                            contentPadding = PaddingValues(4.dp)
+                        ) {
+                            Text("${speed.toInt()}", fontSize = 10.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Font Size Setting - Right column
+        Card(
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp).fillMaxSize(), // Reduced from 20dp to 12dp
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text(
+                    text = "Tamaño de Fuente por Defecto",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "${currentFontSize.toInt()}sp",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Slider(
+                    value = currentFontSize,
+                    onValueChange = onFontSizeChanged,
+                    valueRange = 16f..48f,
+                    steps = 31
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("16sp", style = MaterialTheme.typography.bodySmall)
+                    Text("48sp", style = MaterialTheme.typography.bodySmall)
+                }
+
+                // Quick preset buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    listOf(20f, 24f, 32f, 40f).forEach { size ->
+                        FilledTonalButton(
+                            onClick = { onFontSizeChanged(size) },
+                            modifier = Modifier.size(40.dp),
+                            contentPadding = PaddingValues(4.dp)
+                        ) {
+                            Text("${size.toInt()}", fontSize = 10.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryTabHorizontal(
+    user: FirebaseUser?,
+    textLibraryState: com.promptflow.android.viewmodel.TextLibraryState,
+    onTextSelected: (String) -> Unit,
+    onDeleteText: (SavedText) -> Unit,
+    textLibraryViewModel: TextLibraryViewModel,
+    onShowSaveDialog: () -> Unit
+) {
+    // Use the existing LibraryTab but with horizontal padding optimization
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        // Get all texts (local + cloud)
+        val allTexts = textLibraryViewModel.getAllTexts()
+
+        // Compact storage info for horizontal layout
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (user == null) {
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Storage, null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Almacenamiento Local",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            } else {
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Cloud, null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Google Drive",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Button(
+                onClick = { onShowSaveDialog() }
+            ) {
+                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Agregar")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when {
+            textLibraryState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(100.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            allTexts.isEmpty() -> {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.LibraryBooks, null, modifier = Modifier.size(32.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Tu Biblioteca está Vacía",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Agrega tu primer texto para comenzar",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            else -> {
+                // Grid layout for horizontal space efficiency
+                val columns = 2
+                val chunkedTexts = allTexts.chunked(columns)
+
+                chunkedTexts.forEach { rowTexts ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowTexts.forEach { savedText ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                LibraryTextItem(
+                                    savedText = savedText,
+                                    onTextClick = { onTextSelected(savedText.content) },
+                                    onDeleteClick = { onDeleteText(savedText) }
+                                )
+                            }
+                        }
+                        // Fill empty spaces in incomplete rows
+                        repeat(columns - rowTexts.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccountTabHorizontal(
+    user: FirebaseUser?,
+    authState: com.promptflow.android.viewmodel.AuthState,
+    authViewModel: AuthenticationViewModel,
+    onLoginRequest: () -> Unit,
+    onLogoutRequest: () -> Unit
+) {
+    val context = LocalContext.current
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        if (user == null) {
+            // Login section - Left side
+            Card(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp).fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Icon(
+                        Icons.Default.AccountCircle,
+                        contentDescription = "Account",
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "Accede a Google Drive",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        text = "Sincroniza tus textos en la nube",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+
+                    ElevatedButton(
+                        onClick = { authViewModel.signInWithGoogle(context) },
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        enabled = !authState.isLoading
+                    ) {
+                        if (authState.isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        } else {
+                            Text("G", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Continuar con Google")
+                        }
+                    }
+                }
+            }
+
+            // Benefits section - Right side
+            Card(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp).fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Text(
+                        text = "Beneficios",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        BenefitItem(Icons.Default.Cloud, "Sincronización", "Accede desde cualquier dispositivo")
+                        BenefitItem(Icons.Default.Backup, "Respaldo", "Nunca pierdas tus textos")
+                        BenefitItem(Icons.Default.Share, "Compartir", "Comparte fácilmente")
+                    }
+                }
+            }
+        } else {
+            // User info - Full width when logged in
+            Card(
+                modifier = Modifier.fillMaxSize(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(32.dp).fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = "Profile",
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+
+                        Column {
+                            Text(
+                                text = user.displayName ?: "Usuario de Google",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = user.email ?: "",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(32.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = "Conectado a Google Drive",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Tus textos se sincronizan automáticamente",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            authViewModel.signOut()
+                            onLogoutRequest()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Logout, null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cerrar Sesión")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TraditionalTabLayout(
+    tabs: List<Pair<String, androidx.compose.ui.graphics.vector.ImageVector>>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    paddingValues: PaddingValues,
+    currentText: String,
+    onTextChanged: (String) -> Unit,
+    currentSpeed: Float,
+    onSpeedChanged: (Float) -> Unit,
+    currentFontSize: Float,
+    onFontSizeChanged: (Float) -> Unit,
+    user: FirebaseUser?,
+    textLibraryState: com.promptflow.android.viewmodel.TextLibraryState,
+    onTextSelected: (String) -> Unit,
+    onDeleteText: (SavedText) -> Unit,
+    textLibraryViewModel: TextLibraryViewModel,
+    onShowSaveDialog: () -> Unit,
+    authState: com.promptflow.android.viewmodel.AuthState,
+    authViewModel: AuthenticationViewModel,
+    onLoginRequest: () -> Unit,
+    onLogoutRequest: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
+        // Tab Row
+        TabRow(selectedTabIndex = selectedTab) {
+            tabs.forEachIndexed { index, (title, icon) ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { onTabSelected(index) },
+                    text = { Text(title) },
+                    icon = { Icon(icon, contentDescription = title) }
+                )
+            }
+        }
+
+        // Tab Content
+        when (selectedTab) {
+            0 -> TextEditorTab(
+                currentText = currentText,
+                onTextChanged = onTextChanged
+            )
+            1 -> DefaultsTab(
+                currentSpeed = currentSpeed,
+                onSpeedChanged = onSpeedChanged,
+                currentFontSize = currentFontSize,
+                onFontSizeChanged = onFontSizeChanged
+            )
+            2 -> LibraryTab(
+                user = user,
+                textLibraryState = textLibraryState,
+                onTextSelected = onTextSelected,
+                onDeleteText = onDeleteText,
+                textLibraryViewModel = textLibraryViewModel,
+                onShowSaveDialog = onShowSaveDialog
+            )
+            3 -> AccountTab(
+                user = user,
+                authState = authState,
+                authViewModel = authViewModel,
+                onLoginRequest = onLoginRequest,
+                onLogoutRequest = onLogoutRequest
+            )
+        }
     }
 }
 
@@ -173,13 +876,16 @@ private fun TextEditorTab(
     currentText: String,
     onTextChanged: (String) -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val isTablet = configuration.screenWidthDp.dp > 600.dp
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         Text(
-            text = "Edit Teleprompter Text",
+            text = "Editor de Texto del Teleprompter",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -190,8 +896,11 @@ private fun TextEditorTab(
             value = currentText,
             onValueChange = onTextChanged,
             modifier = Modifier.fillMaxSize(),
-            placeholder = { Text("Enter your teleprompter text here...") },
-            minLines = 10
+            placeholder = { Text("Escribe aquí el texto de tu teleprompter...") },
+            minLines = if (isTablet) 15 else 10,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.4f
+            )
         )
     }
 }
@@ -312,6 +1021,7 @@ private fun LibraryTab(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         // Get all texts (local + cloud)
         val allTexts = textLibraryViewModel.getAllTexts()
@@ -392,7 +1102,9 @@ private fun LibraryTab(
         when {
             textLibraryState.isLoading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -412,22 +1124,22 @@ private fun LibraryTab(
                         )
                     ) {
                         Column(
-                            modifier = Modifier.padding(32.dp),
+                            modifier = Modifier.padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(
                                 Icons.Default.LibraryBooks,
                                 contentDescription = "Empty Library",
-                                modifier = Modifier.size(64.dp),
+                                modifier = Modifier.size(48.dp),
                                 tint = MaterialTheme.colorScheme.primary
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = if (user == null)
                                     "Tu Biblioteca Local está Vacía"
                                 else
                                     "Tu Biblioteca está Vacía",
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
                             )
@@ -437,11 +1149,11 @@ private fun LibraryTab(
                                     "Comienza agregando tu primer texto de teleprompter. Se guardará localmente en este dispositivo."
                                 else
                                     "Comienza agregando tu primer texto de teleprompter. Se guardará como archivo .txt en tu Google Drive.",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             // Call to action button
                             Button(
@@ -451,15 +1163,15 @@ private fun LibraryTab(
                                 Icon(
                                     Icons.Default.Add,
                                     contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Add Your First Text")
+                                Text("Agregar Primer Texto")
                             }
                         }
                     }
 
-                    // Helpful tips card
+                    // Helpful tips card - more compact for horizontal layout
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -467,19 +1179,19 @@ private fun LibraryTab(
                         )
                     ) {
                         Column(
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(12.dp)
                         ) {
                             Text(
-                                text = "💡 Tips:",
+                                text = "💡 Consejos:",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "• Use the Text Editor tab to write and edit your teleprompter content\n" +
-                                      "• Save frequently used texts to access them quickly\n" +
-                                      "• Each saved text can have a custom title for easy identification",
+                                text = "• Usa el Editor para escribir tu contenido\n" +
+                                      "• Guarda textos frecuentes para acceso rápido\n" +
+                                      "• Cada texto puede tener un título personalizado",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -489,10 +1201,11 @@ private fun LibraryTab(
             }
 
             else -> {
-                LazyColumn(
+                // Text list - now in a Column instead of LazyColumn for better scroll compatibility
+                Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(allTexts) { savedText ->
+                    allTexts.forEach { savedText ->
                         LibraryTextItem(
                             savedText = savedText,
                             onTextClick = { onTextSelected(savedText.content) },
@@ -519,6 +1232,9 @@ private fun LibraryTab(
                 )
             }
         }
+
+        // Add extra space at bottom for better scrolling
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -535,11 +1251,12 @@ private fun AccountTab(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Account",
+            text = "Cuenta",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -582,30 +1299,23 @@ private fun AccountTab(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // DEBUG: Log current state
-                    println("🔍 Button state - isLoading: ${authState.isLoading}, user: ${user?.email}")
-
                     Text(
-                        text = "Sign in with your Google Account",
+                        text = "Accede a Google Drive",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Connect your Google Account to sync your teleprompter texts across all your devices and never lose your content.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        text = "Inicia sesión para sincronizar tus textos con Google Drive",
+                        style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 8.dp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Show error if exists
+                    // Show errors if any
                     authState.error?.let { error ->
                         Card(
                             modifier = Modifier
@@ -632,127 +1342,77 @@ private fun AccountTab(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = if (error.contains("No hay cuentas de Google"))
-                                            "Cuenta de Google requerida"
-                                        else
-                                            "Error de conexión",
-                                        style = MaterialTheme.typography.titleMedium,
+                                        text = when {
+                                            error.contains("No hay cuentas de Google") -> "Configura una cuenta de Google"
+                                            error.contains("cancelled") -> "Operación cancelada"
+                                            error.contains("network") -> "Error de conexión"
+                                            else -> "Error de autenticación"
+                                        },
+                                        style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onErrorContainer
                                     )
                                 }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = error,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    text = when {
+                                        error.contains("No hay cuentas de Google") ->
+                                            "Ve a Configuración > Cuentas > Agregar cuenta > Google para configurar tu cuenta."
+                                        error.contains("cancelled") ->
+                                            "La autenticación fue cancelada. Inténtalo de nuevo."
+                                        error.contains("network") ->
+                                            "Verifica tu conexión a internet y vuelve a intentar."
+                                        else ->
+                                            "Hubo un problema con la autenticación. Inténtalo de nuevo."
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
 
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                // Action buttons based on error type
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    if (error.contains("No hay cuentas de Google")) {
-                                        OutlinedButton(
-                                            onClick = {
-                                                // Clear error and provide guidance
-                                                authViewModel.clearError()
-                                                android.widget.Toast.makeText(
-                                                    context,
-                                                    "Ve a Configuración del dispositivo para agregar una cuenta de Google",
-                                                    android.widget.Toast.LENGTH_LONG
-                                                ).show()
-                                            },
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                            ),
-                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onErrorContainer)
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Settings,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Ir a Config.")
-                                        }
-                                    }
-
-                                    OutlinedButton(
+                                if (error.contains("No hay cuentas de Google")) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Button(
                                         onClick = {
-                                            authViewModel.clearError()
-                                            println("🔄 Retry button clicked after error!")
-                                            authViewModel.signInWithGoogle(context)
+                                            // Open Android Settings to add Google account
+                                            try {
+                                                val intent = android.content.Intent(android.provider.Settings.ACTION_ADD_ACCOUNT).apply {
+                                                    putExtra(android.provider.Settings.EXTRA_ACCOUNT_TYPES, arrayOf("com.google"))
+                                                }
+                                                context.startActivity(intent)
+                                            } catch (e: Exception) {
+                                                println("❌ Could not open account settings: ${e.message}")
+                                            }
                                         },
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                        ),
-                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onErrorContainer)
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.onErrorContainer,
+                                            contentColor = MaterialTheme.colorScheme.errorContainer
+                                        )
                                     ) {
                                         Icon(
-                                            Icons.Default.Refresh,
+                                            Icons.Default.Settings,
                                             contentDescription = null,
                                             modifier = Modifier.size(16.dp)
                                         )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Reintentar")
-                                    }
-
-                                    TextButton(
-                                        onClick = {
-                                            authViewModel.clearError()
-                                        }
-                                    ) {
-                                        Text(
-                                            "Cerrar",
-                                            color = MaterialTheme.colorScheme.onErrorContainer
-                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Abrir Configuración")
                                     }
                                 }
                             }
                         }
                     }
 
-                    // ENHANCED GOOGLE SIGN-IN BUTTON - WITH TOAST DEBUG
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Google Sign-In Button - ENHANCED STYLE
                     ElevatedButton(
                         onClick = {
-                            // VISUAL DEBUG WITH TOAST
-                            android.widget.Toast.makeText(
-                                context,
-                                "🔵 Button clicked! Starting Google Sign-In...",
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-
                             println("🔵 BUTTON CLICKED! Starting Google Sign-In process...")
-                            println("🔍 Current auth state: isLoading=${authState.isLoading}, error=${authState.error}")
-                            try {
-                                onLoginRequest()
-                                println("✅ onLoginRequest() called successfully")
-
-                                // Show another toast to confirm the call
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "✅ Login request sent!",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-
-                            } catch (e: Exception) {
-                                println("❌ Error calling onLoginRequest: ${e.message}")
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "❌ Error: ${e.message}",
-                                    android.widget.Toast.LENGTH_LONG
-                                ).show()
-                            }
+                            authViewModel.signInWithGoogle(context)
                         },
-                        enabled = !authState.isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
+                        enabled = !authState.isLoading,
                         colors = ButtonDefaults.elevatedButtonColors(
                             containerColor = Color.White,
                             contentColor = Color(0xFF1F1F1F),
@@ -777,7 +1437,7 @@ private fun AccountTab(
                                     strokeWidth = 2.dp
                                 )
                                 Text(
-                                    text = "Signing in...",
+                                    text = "Iniciando sesión...",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Medium,
                                     color = Color(0xFF1F1F1F)
@@ -788,16 +1448,14 @@ private fun AccountTab(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Simplified Google icon (just the "G")
                                 Text(
                                     text = "G",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF4285F4)
                                 )
-
                                 Text(
-                                    text = "Continue with Google",
+                                    text = "Continuar con Google",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Medium,
                                     color = Color(0xFF1F1F1F)
@@ -806,48 +1464,39 @@ private fun AccountTab(
                         }
                     }
 
-                    // Show loading state
-                    if (authState.isLoading) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Opening Google Sign-In...",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Benefits section - ENHANCED WITH ICONS
+                    Text(
+                        text = "Beneficios de iniciar sesión:",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        BenefitItem(
+                            icon = Icons.Default.Cloud,
+                            title = "Sincronización en la Nube",
+                            description = "Accede a tus textos desde cualquier dispositivo"
+                        )
+                        BenefitItem(
+                            icon = Icons.Default.Backup,
+                            title = "Respaldo Automático",
+                            description = "Nunca pierdas tus textos importantes"
+                        )
+                        BenefitItem(
+                            icon = Icons.Default.Share,
+                            title = "Compartir Fácil",
+                            description = "Comparte textos con otros dispositivos al instante"
                         )
                     }
                 }
             }
-
-            // Benefits section
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Benefits of signing in:",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                BenefitItem(
-                    icon = Icons.Default.Cloud,
-                    title = "Cloud Sync",
-                    description = "Access your texts from any device"
-                )
-                BenefitItem(
-                    icon = Icons.Default.Backup,
-                    title = "Automatic Backup",
-                    description = "Never lose your important texts"
-                )
-                BenefitItem(
-                    icon = Icons.Default.Share,
-                    title = "Easy Sharing",
-                    description = "Share texts with other devices instantly"
-                )
-            }
-
         } else {
             // Logged in - ENHANCED USER INFO
             Card(
@@ -888,34 +1537,49 @@ private fun AccountTab(
 
                         Column {
                             Text(
-                                text = user.displayName ?: "Google User",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = user.displayName ?: "Usuario de Google",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = user.email ?: "",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                    }
 
-                            // Account status
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(top = 4.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.CheckCircle,
-                                    contentDescription = "Verified",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Status section
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = "Connected",
+                                tint = Color(0xFF4CAF50),
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
                                 Text(
-                                    text = "Connected",
+                                    text = "Conectado a Google Drive",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Tus textos se sincronizan automáticamente",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Medium
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -923,9 +1587,12 @@ private fun AccountTab(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Account actions
+                    // Logout button
                     OutlinedButton(
-                        onClick = onLogoutRequest,
+                        onClick = {
+                            authViewModel.signOut()
+                            onLogoutRequest()
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = MaterialTheme.colorScheme.error
@@ -934,47 +1601,11 @@ private fun AccountTab(
                     ) {
                         Icon(
                             Icons.Default.Logout,
-                            contentDescription = null,
+                            contentDescription = "Logout",
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Sign Out")
-                    }
-                }
-            }
-
-            // Storage info for logged in users
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.CloudDone,
-                        contentDescription = "Cloud Active",
-                        modifier = Modifier.size(32.dp),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = "Cloud Sync Active",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            text = "Your texts are automatically backed up and synced",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                        Text("Cerrar Sesión")
                     }
                 }
             }
@@ -989,7 +1620,8 @@ private fun BenefitItem(
     description: String
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Icon(
             icon,
@@ -1002,7 +1634,7 @@ private fun BenefitItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Bold
             )
             Text(
                 text = description,
