@@ -1,5 +1,6 @@
 package com.promptflow.android.ui.screen
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -21,12 +22,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseUser
-import com.promptflow.android.ui.components.UserProfileCard
 import com.promptflow.android.viewmodel.TextLibraryViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,8 +48,14 @@ fun TeleprompterScreen(
     var speed by remember { mutableFloatStateOf(initialSpeed) }
     var fontSize by remember { mutableFloatStateOf(initialFontSize) }
     var text by remember { mutableStateOf(initialText) }
-    var scrollOffset by remember { mutableIntStateOf(0) }
     var showControls by remember { mutableStateOf(true) }
+
+    // Detect screen orientation and size
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+    val isTablet = screenWidth > 600.dp || screenHeight > 600.dp
 
     // Update callbacks when values change
     LaunchedEffect(text) { onTextChanged(text) }
@@ -56,31 +63,51 @@ fun TeleprompterScreen(
     LaunchedEffect(fontSize) { onFontSizeChanged(fontSize) }
 
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
-    // Listen for selected text from library
-    LaunchedEffect(Unit) {
-        // This would be handled by navigation in a real implementation
-        // For now, we'll use the existing text management
+    // Reset function to scroll back to top
+    val resetScroll: () -> Unit = {
+        isPlaying = false
+        coroutineScope.launch {
+            listState.animateScrollToItem(0, 0)
+        }
     }
 
-    // Auto-scroll effect - PROFESSIONAL TELEPROMPTER BEHAVIOR
-    LaunchedEffect(isPlaying, speed, text) {
+    // Auto-scroll effect - SMOOTH TELEPROMPTER WITH PROPER MANUAL SCROLL SYNC
+    LaunchedEffect(isPlaying, speed) {
         if (isPlaying) {
             while (isPlaying) {
-                delay((50 / speed).toLong())
-                scrollOffset += 1
+                delay(16) // ~60 FPS for ultra-smooth scrolling
 
-                // Check if we can still scroll (text hasn't fully passed)
-                val canScroll = listState.canScrollForward ||
-                               listState.firstVisibleItemIndex == 0 ||
-                               scrollOffset < (text.length / 10) + 100 // Estimate based on text length
+                // Calculate scroll increment based on speed
+                val increment = (speed * 0.5f).toInt()
 
-                if (canScroll) {
-                    listState.scrollToItem(0, scrollOffset)
-                } else {
-                    // All text has scrolled off screen - end playback
+                try {
+                    // Check if user is manually scrolling
+                    if (listState.isScrollInProgress) {
+                        // User is manually scrolling, pause auto-scroll for this frame
+                        continue
+                    }
+
+                    // Get current scroll position and add increment
+                    val currentOffset = listState.firstVisibleItemScrollOffset
+                    val newOffset = currentOffset + increment
+
+                    // Scroll to the new position
+                    listState.scrollToItem(
+                        index = 0,
+                        scrollOffset = newOffset
+                    )
+                } catch (e: Exception) {
+                    // If there's a conflict, just continue
+                    // This allows manual scroll to work
+                }
+
+                // Check if we've reached the end using the actual scroll position
+                val canScrollForward = listState.canScrollForward
+                if (!canScrollForward) {
                     isPlaying = false
-                    scrollOffset = 0 // Auto-reset for next play
+                    // Don't reset scroll position, let user manually reset if needed
                 }
             }
         }
@@ -98,6 +125,65 @@ fun TeleprompterScreen(
         }
     }
 
+    // Adaptive layout based on orientation and device type
+    if (isLandscape || !isTablet) {
+        // Landscape mode or phone - use bottom controls (original design)
+        LandscapeLayout(
+            isPlaying = isPlaying,
+            showControls = showControls,
+            listState = listState,
+            text = text,
+            fontSize = fontSize,
+            speed = speed,
+            onPlayPauseClick = { isPlaying = !isPlaying },
+            onSpeedChange = { speed = it },
+            onFontSizeChange = { fontSize = it },
+            onResetClick = resetScroll,
+            onSettingsClick = {
+                if (!isPlaying) onShowSettings()
+            },
+            onToggleControls = {
+                if (isPlaying) showControls = !showControls
+            }
+        )
+    } else {
+        // Portrait mode on tablet - use side controls for better accessibility
+        PortraitTabletLayout(
+            isPlaying = isPlaying,
+            showControls = showControls,
+            listState = listState,
+            text = text,
+            fontSize = fontSize,
+            speed = speed,
+            onPlayPauseClick = { isPlaying = !isPlaying },
+            onSpeedChange = { speed = it },
+            onFontSizeChange = { fontSize = it },
+            onResetClick = resetScroll,
+            onSettingsClick = {
+                if (!isPlaying) onShowSettings()
+            },
+            onToggleControls = {
+                if (isPlaying) showControls = !showControls
+            }
+        )
+    }
+}
+
+@Composable
+private fun LandscapeLayout(
+    isPlaying: Boolean,
+    showControls: Boolean,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    text: String,
+    fontSize: Float,
+    speed: Float,
+    onPlayPauseClick: () -> Unit,
+    onSpeedChange: (Float) -> Unit,
+    onFontSizeChange: (Float) -> Unit,
+    onResetClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onToggleControls: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -116,11 +202,7 @@ fun TeleprompterScreen(
                         else -> 20.dp         // Playing with controls hidden - full screen
                     }
                 )
-                .clickable {
-                    if (isPlaying) {
-                        showControls = !showControls // Toggle controls during playback
-                    }
-                },
+                .clickable { onToggleControls() },
             contentPadding = PaddingValues(
                 top = if (!isPlaying) 120.dp else 50.dp,
                 bottom = 50.dp
@@ -139,42 +221,32 @@ fun TeleprompterScreen(
             }
         }
 
-        // ENHANCED Control panel - AUTO-HIDE DURING PLAYBACK
-        if (showControls || !isPlaying) {
-            Surface(
+        // Control panel at bottom
+        AnimatedVisibility(
+            visible = !isPlaying || showControls,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            Card(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-                color = Color.Black.copy(alpha = 0.9f),
-                shadowElevation = 16.dp
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Black.copy(alpha = 0.8f)
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Play/Pause button - ENHANCED
-                    FloatingActionButton(
-                        onClick = {
-                            if (!isPlaying) {
-                                // Reset scroll only if at the end (increased threshold)
-                                if (scrollOffset >= 1800) { // Reset earlier to prevent reaching limit
-                                    scrollOffset = 0
-                                }
-                            }
-                            isPlaying = !isPlaying
-                        },
-                        containerColor = if (isPlaying)
-                            MaterialTheme.colorScheme.error
-                        else
-                            MaterialTheme.colorScheme.primary,
-                        contentColor = Color.White
-                    ) {
+                    // Play/Pause button
+                    IconButton(onClick = onPlayPauseClick) {
                         Icon(
-                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play"
+                            if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
 
@@ -183,35 +255,10 @@ fun TeleprompterScreen(
                         Text("Speed: ${speed.toInt()}x", color = Color.White, fontSize = 12.sp)
                         Slider(
                             value = speed,
-                            onValueChange = { speed = it },
-                            valueRange = 1f..25f, // Expanded range: 1x to 25x
-                            steps = 23, // More precise steps
+                            onValueChange = onSpeedChange,
+                            valueRange = 1f..25f,
                             modifier = Modifier.width(100.dp)
                         )
-                        // Quick speed buttons
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            TextButton(
-                                onClick = { speed = 5f },
-                                modifier = Modifier.size(width = 30.dp, height = 20.dp),
-                                contentPadding = PaddingValues(2.dp)
-                            ) {
-                                Text("5", color = Color.White, fontSize = 10.sp)
-                            }
-                            TextButton(
-                                onClick = { speed = 10f },
-                                modifier = Modifier.size(width = 30.dp, height = 20.dp),
-                                contentPadding = PaddingValues(2.dp)
-                            ) {
-                                Text("10", color = Color.White, fontSize = 10.sp)
-                            }
-                            TextButton(
-                                onClick = { speed = 15f },
-                                modifier = Modifier.size(width = 30.dp, height = 20.dp),
-                                contentPadding = PaddingValues(2.dp)
-                            ) {
-                                Text("15", color = Color.White, fontSize = 10.sp)
-                            }
-                        }
                     }
 
                     // Font size control
@@ -219,19 +266,14 @@ fun TeleprompterScreen(
                         Text("Size: ${fontSize.toInt()}sp", color = Color.White, fontSize = 12.sp)
                         Slider(
                             value = fontSize,
-                            onValueChange = { fontSize = it },
+                            onValueChange = onFontSizeChange,
                             valueRange = 16f..48f,
                             modifier = Modifier.width(100.dp)
                         )
                     }
 
                     // Reset button
-                    IconButton(
-                        onClick = {
-                            isPlaying = false
-                            scrollOffset = 0
-                        }
-                    ) {
+                    IconButton(onClick = onResetClick) {
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = "Reset Position",
@@ -239,26 +281,193 @@ fun TeleprompterScreen(
                         )
                     }
 
-                    // Settings button - Opens full settings screen
-                    IconButton(
-                        onClick = {
-                            if (!isPlaying) { // Only allow settings when not playing
-                                onShowSettings()
-                            }
-                        }
-                    ) {
+                    // Settings button
+                    IconButton(onClick = onSettingsClick) {
                         Icon(
                             Icons.Default.Settings,
                             contentDescription = "Settings",
-                            tint = if (isPlaying) Color.Gray else Color.White // Visual feedback
+                            tint = if (isPlaying) Color.Gray else Color.White
                         )
                     }
                 }
             }
         }
+    }
+}
 
-        // Settings and dialogs are now handled by the separate SettingsScreen
-        // No more floating panels that interfere with the teleprompter experience
+@Composable
+private fun PortraitTabletLayout(
+    isPlaying: Boolean,
+    showControls: Boolean,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    text: String,
+    fontSize: Float,
+    speed: Float,
+    onPlayPauseClick: () -> Unit,
+    onSpeedChange: (Float) -> Unit,
+    onFontSizeChange: (Float) -> Unit,
+    onResetClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onToggleControls: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        // Main text display - full width
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 32.dp)
+                .padding(
+                    bottom = when {
+                        !isPlaying -> 140.dp  // Paused - larger space for controls
+                        showControls -> 100.dp // Playing with controls visible
+                        else -> 20.dp         // Playing with controls hidden
+                    }
+                )
+                .clickable { onToggleControls() },
+            contentPadding = PaddingValues(
+                top = if (!isPlaying) 60.dp else 40.dp,
+                bottom = 40.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Text(
+                    text = text,
+                    color = Color.White,
+                    fontSize = fontSize.sp,
+                    textAlign = TextAlign.Left, // Left align for portrait reading
+                    lineHeight = (fontSize * 1.4).sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // Bottom control panel - improved for tablet portrait
+        AnimatedVisibility(
+            visible = !isPlaying || showControls,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Black.copy(alpha = 0.9f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Top row: Play/Pause, Reset, Settings
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = onPlayPauseClick,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isPlaying) "Pause" else "Play",
+                                tint = Color.White,
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onResetClick,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Reset Position",
+                                tint = Color.White,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onSettingsClick,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Settings,
+                                contentDescription = "Settings",
+                                tint = if (isPlaying) Color.Gray else Color.White,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+
+                    // Speed and Font Size controls - horizontal sliders for better usability
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        // Speed control
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Velocidad: ${speed.toInt()}x",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Slider(
+                                value = speed,
+                                onValueChange = onSpeedChange,
+                                valueRange = 1f..25f,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = SliderDefaults.colors(
+                                    thumbColor = Color.White,
+                                    activeTrackColor = Color.White,
+                                    inactiveTrackColor = Color.Gray
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(20.dp))
+
+                        // Font size control
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Tamaño: ${fontSize.toInt()}sp",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Slider(
+                                value = fontSize,
+                                onValueChange = onFontSizeChange,
+                                valueRange = 16f..48f,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = SliderDefaults.colors(
+                                    thumbColor = Color.White,
+                                    activeTrackColor = Color.White,
+                                    inactiveTrackColor = Color.Gray
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
