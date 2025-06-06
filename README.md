@@ -1,18 +1,8 @@
 # PromptFlow 📱
 
-Una aplicación moderna de teleprompter para Android que permite a los usuarios leer textos de manera fluida y profesional.
+A modern teleprompter application for Android that allows users to read texts smoothly and professionally.
 
-*A modern teleprompter application for Android that allows users to read texts smoothly and professionally.*
-
-## Características / Features
-
-### 🎯 Funcionalidades Principales
-- Velocidad de desplazamiento ajustable
-- Tamaño de fuente personalizable
-- Modo espejo para teleprompters físicos
-- Interfaz limpia y minimalista
-- Soporte para textos largos
-- Control remoto opcional
+## Features
 
 ### 🎯 Key Features
 - Adjustable scrolling speed
@@ -22,30 +12,52 @@ Una aplicación moderna de teleprompter para Android que permite a los usuarios 
 - Support for long texts
 - Optional remote control
 
-## Tecnologías / Technologies
+## Technologies
 
-- **Lenguaje**: Kotlin
+- **Language**: Kotlin
 - **Framework**: Android Native
-- **Arquitectura**: MVVM
+- **Architecture**: MVVM
 - **UI**: Jetpack Compose
-- **Base de datos**: Room
+- **Database**: Room
 
-## Instalación / Installation
+## Installation
 
 ```bash
-git clone https://github.com/tu-usuario/PromptFlow.git
+git clone https://github.com/ColinBurgess/PromptFlow.git
 cd PromptFlow
 ./gradlew build
 ```
 
-## Contribución / Contributing
+## Usage
 
-Las contribuciones son bienvenidas. Por favor, abre un issue primero para discutir los cambios propuestos.
+1. Open the app in landscape mode
+2. Edit your text using the settings panel
+3. Adjust scrolling speed (1x-10x)
+4. Customize font size (16sp-48sp)
+5. Press play to start the teleprompter
+6. Use pause/reset controls as needed
 
-*Contributions are welcome. Please open an issue first to discuss proposed changes.*
+## Development
 
-## Licencia / License
+### Requirements
+- Android Studio Arctic Fox or later
+- Android SDK 24+
+- Kotlin 1.9.10+
 
-MIT License - consulta el archivo LICENSE para más detalles.
+### Building
+```bash
+./gradlew assembleDebug
+```
 
-*MIT License - see LICENSE file for details.*
+### Testing
+```bash
+./gradlew test
+```
+
+## Contributing
+
+Contributions are welcome. Please open an issue first to discuss proposed changes.
+
+## License
+
+MIT License - see LICENSE file for details.
