@@ -1,212 +1,304 @@
-# PromptFlow - Project Context 📋
+# PromptFlow - Contexto del Proyecto
 
-> **AI Assistant Context File** - This file contains essential project information to maintain continuity between conversations.
+## 📱 **Descripción del Proyecto**
 
-## 📋 General Information
+PromptFlow es una aplicación Android de teleprompter profesional con sincronización en la nube. Permite a los usuarios crear, editar y visualizar textos que se desplazan automáticamente en pantalla, ideal para presentaciones, grabaciones de video y discursos.
 
-- **Project Name:** PromptFlow
-- **Description:** Modern Android teleprompter application
-- **Owner:** Colin Moreno-Burgess (@ColinBurgess)
-- **Repository:** https://github.com/ColinBurgess/PromptFlow
-- **Code Language:** English (user rule)
-- **Chat Communication:** Spanish (user rule)
-- **Start Date:** June 6, 2025
+## 🎯 **Características Principales**
 
-## 🎯 Design Decisions Made
+### ✅ **Implementadas y Funcionando**
+- **Teleprompter Core**: Desplazamiento suave de texto con controles de velocidad (1x-25x) y tamaño de fuente (16sp-48sp)
+- **Interfaz de Usuario**: Diseño moderno con Material Design 3, tabs para diferentes secciones
+- **Autenticación Google**: Integración completa con Firebase Auth y Google Sign-In
+- **Almacenamiento Local**: Sistema robusto de guardado/carga de textos usando SharedPreferences + Gson
+- **Biblioteca de Textos**: Gestión completa (crear, editar, eliminar, seleccionar textos)
+- **Manejo de Errores**: Mensajes amigables para usuario con debugging completo
+- **Estados de Interfaz**: Empty states informativos, loading states, error recovery
+- **Configuración**: Persistencia de velocidad y tamaño de fuente predeterminados
 
-### Application Name
-- **Chosen:** PromptFlow
-- **Reasons:**
-  - Suggests smooth text flow
-  - Easy to remember and pronounce
-  - Professional and modern
-- **Rejected:** SpeechCue, TeleScript, FlowText, CueCard
+### 🚧 **Parcialmente Implementadas**
+- **Google Drive Integration**:
+  - ✅ UI actualizada para mostrar "Google Drive"
+  - ✅ Simulación de migración local → cloud
+  - ❌ API real de Google Drive pendiente
+  - ❌ Creación de archivos .txt en Drive pendiente
 
-### Selected Technologies
-- **Language:** Kotlin
-- **UI Framework:** Jetpack Compose
-- **Architecture:** MVVM (prepared for implementation)
-- **Database:** Room (dependency added)
-- **Theme:** Material Design 3
-- **Target SDK:** 34
-- **Min SDK:** 24
+### 📋 **Pendientes de Implementar**
+- **Google Drive API Real**: Implementación completa de upload/download de archivos .txt
+- **Sincronización Bidireccional**: Detección de cambios entre dispositivos
+- **Edición de Textos**: Funcionalidad para editar textos existentes
+- **Búsqueda**: Filtrado de textos en la biblioteca
+- **Exportar/Importar**: Funciones para backup y restore
 
-### Orientation and UX
-- **Orientation:** Forced landscape (typical for teleprompters)
-- **Background:** Black (professional for teleprompters)
-- **Text:** White on black
-- **Controls Location:** Bottom with transparency
+## 🏗️ **Arquitectura Técnica**
 
-## 🚀 Current Development Status
+### **Patrón de Arquitectura**: MVVM (Model-View-ViewModel)
+- **View**: Composables de Jetpack Compose
+- **ViewModel**: Gestión de estado con StateFlow
+- **Model**: Data classes y repositorios
 
-### ✅ Completed
-- [x] Initial Android project structure
-- [x] Gradle configuration with all dependencies
-- [x] Main screen (`TeleprompterScreen`) with basic functionality
-- [x] Theme system (Color, Typography, Theme)
-- [x] MainActivity with Jetpack Compose
-- [x] AndroidManifest with permissions and configuration
-- [x] Resources (strings.xml, themes.xml)
-- [x] Git repository initialized
-- [x] GitHub repository created and synced
-- [x] Bilingual README (Spanish/English)
-- [x] Android .gitignore
+### **Tecnologías Core**
+- **UI Framework**: Jetpack Compose + Material Design 3
+- **Arquitectura**: Android Architecture Components
+- **Estado**: StateFlow + Coroutines
+- **Navegación**: Navigation Compose
+- **Autenticación**: Firebase Auth + Google Sign-In
+- **Almacenamiento Local**: SharedPreferences + Gson
+- **Almacenamiento Cloud**: Firebase (migración a Google Drive en progreso)
 
-### 🎛️ Implemented Features
-- [x] **Playback control:** Play/Pause with FAB
-- [x] **Adjustable speed:** Slider from 1x to 10x
-- [x] **Font size:** Slider from 16sp to 48sp
-- [x] **Text editor:** Settings panel with TextField
-- [x] **Auto-scroll:** Smooth animation based on speed
-- [x] **Reset:** Functionality to restart position
-- [x] **Responsive UI:** Well-distributed controls in landscape
-
-## 🏗️ Code Architecture
-
-### Package Structure
-```
-com.promptflow.android/
-├── MainActivity.kt
-└── ui/
-    ├── screen/
-    │   └── TeleprompterScreen.kt
-    └── theme/
-        ├── Color.kt
-        ├── Theme.kt
-        └── Type.kt
-```
-
-### Main Components
-- **MainActivity:** Main Activity with Scaffold and Surface
-- **TeleprompterScreen:** Main Composable with all logic
-- **PromptFlowTheme:** Custom theme with Material Design 3
-
-### Managed State
-- `isPlaying: Boolean` - Playback control
-- `speed: Float` - Scroll speed (1f-10f)
-- `fontSize: Float` - Font size (16f-48f)
-- `showSettings: Boolean` - Settings panel visibility
-- `text: String` - Teleprompter content
-- `listState: LazyListState` - Scroll state
-
-## 📋 TODOs and Next Steps
-
-### 🔥 High Priority
-- [ ] **Mirror mode:** Implement mirrored text for physical teleprompters
-- [ ] **Persistence:** Save text and settings with DataStore
-- [ ] **Gestures:** Control via tap/swipe in addition to buttons
-- [ ] **Full screen:** Hide status bar and navigation
-
-### 🎯 Medium Priority
-- [ ] **Remote control:** Implement with WebSocket or Bluetooth
-- [ ] **Multiple texts:** Saved scripts system
-- [ ] **Bookmarks:** Text bookmark system
-- [ ] **Advanced settings:** Colors, fonts, etc.
-
-### 💡 Future Improvements
-- [ ] **Export/Import:** Functionality to share scripts
-- [ ] **AI Prompts:** Integration to generate/improve texts
-- [ ] **Analytics:** Usage and reading speed metrics
-- [ ] **Widget:** Control from notification or widget
-
-## 🔧 Technical Configuration
-
-### Key Dependencies
+### **Dependencias Principales**
 ```kotlin
-// Jetpack Compose
+// Core Android
 implementation("androidx.compose.ui:ui")
 implementation("androidx.compose.material3:material3")
-implementation("androidx.activity:activity-compose:1.8.2")
-
-// ViewModel
 implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-
-// Navigation (added for future use)
 implementation("androidx.navigation:navigation-compose:2.7.5")
 
-// Room (added for future persistence)
-implementation("androidx.room:room-runtime:2.6.1")
-implementation("androidx.room:room-ktx:2.6.1")
+// Firebase & Auth
+implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+implementation("com.google.firebase:firebase-auth-ktx")
+implementation("androidx.credentials:credentials:1.2.0")
+implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
+
+// Storage
+implementation("com.google.code.gson:gson:2.10.1")
+// TODO: Google Drive API dependencies (comentadas temporalmente)
 ```
 
-### Permissions
-- `android.permission.WAKE_LOCK` - Keep screen on during use
+## 🔧 **Configuración del Proyecto**
 
-### Specific Configuration
-- **Orientation:** `android:screenOrientation="landscape"`
-- **Theme:** `Theme.PromptFlow` (no ActionBar)
-- **Target API:** 31+ with dynamic theme support
+### **Firebase Setup**
+- **Proyecto**: `promptflow-55398`
+- **Package Name**: `com.promptflow.android`
+- **Web Client ID**: `***REMOVED***`
+- **SHA-1 Debug**: `***REMOVED***`
 
-## 📝 Implementation Notes
+### **Estructura de Archivos**
+```
+app/src/main/java/com/promptflow/android/
+├── MainActivity.kt                 // Punto de entrada, navegación principal
+├── ui/
+│   ├── screen/
+│   │   ├── TeleprompterScreen.kt  // Pantalla principal del teleprompter
+│   │   └── SettingsScreen.kt      // Configuración, biblioteca, cuenta
+│   └── theme/
+│       └── Theme.kt               // Material Design 3 theming
+├── viewmodel/
+│   ├── AuthenticationViewModel.kt // Gestión de Google Sign-In
+│   └── TextLibraryViewModel.kt    // Gestión de textos y almacenamiento
+└── google-services.json           // Configuración Firebase
+```
 
-### Auto-scroll Algorithm
+### **Arquitectura de Datos**
 ```kotlin
-LaunchedEffect(isPlaying, speed) {
-    if (isPlaying) {
-        while (isPlaying) {
-            delay((100 / speed).toLong())
-            if (listState.canScrollForward) {
-                listState.animateScrollBy(1f)
-            } else {
-                isPlaying = false // Auto-stop at end
-            }
-        }
+data class SavedText(
+    val id: String,
+    val title: String,
+    val content: String,
+    val createdAt: Date,
+    val updatedAt: Date,
+    val userId: String,
+    val isLocal: Boolean,
+    val driveFileId: String? = null
+)
+
+data class AuthState(
+    val isLoading: Boolean = false,
+    val user: FirebaseUser? = null,
+    val error: String? = null,
+    val isSignedIn: Boolean = false
+)
+
+data class TextLibraryState(
+    val isLoading: Boolean = false,
+    val savedTexts: List<SavedText> = emptyList(),
+    val localTexts: List<SavedText> = emptyList(),
+    val error: String? = null
+)
+```
+
+## 🚀 **Estado Actual de la Aplicación**
+
+### **Flujo de Usuario Sin Login**
+1. Usuario abre la app → TeleprompterScreen con texto de ejemplo
+2. Usuario va a Settings → Puede editar texto, configurar velocidad/fuente
+3. Usuario va a Library → Ve "Almacenamiento Local", puede guardar textos
+4. Textos se guardan en SharedPreferences como JSON
+5. Usuario puede seleccionar textos guardados para el teleprompter
+
+### **Flujo de Usuario Con Login**
+1. Usuario va a Account Tab → Ve interfaz mejorada con Google branding
+2. Usuario hace clic en "Continue with Google" → Autenticación exitosa
+3. UI cambia a mostrar "Google Drive" en lugar de "Almacenamiento Local"
+4. Textos locales se "migran" automáticamente al estado cloud
+5. Nuevos textos se muestran con icono ☁️ (cloud) en lugar de 📱 (local)
+6. **Nota**: Actualmente los textos siguen guardándose localmente, Google Drive API pendiente
+
+### **Manejo de Errores Implementado**
+- **Sin cuentas Google**: Mensaje detallado con pasos para configurar cuenta
+- **Conexión cancelada**: Mensaje amigable para reintentar
+- **Errores de red**: Verificación de conectividad con opciones de retry
+- **Estados de carga**: Indicadores visuales durante operaciones async
+
+## 📊 **Debugging y Logging**
+
+### **Sistema de Debug Implementado**
+```kotlin
+// Emojis para fácil filtrado en Android Studio Logcat
+println("🔵 BUTTON CLICKED! Starting Google Sign-In process...")
+println("🔍 CredentialManager created successfully")
+println("✅ Text saved to Google Drive: $title")
+println("❌ Error saving to Drive: ${e.message}")
+```
+
+### **Filtros de Logcat Recomendados**
+- `PromptFlow` - Todos los logs de la app
+- `🔵|🔍|✅|❌` - Solo logs importantes con emojis
+
+## 🎯 **Próximos Pasos Prioritarios**
+
+### **1. Implementación Real de Google Drive (Alta Prioridad)**
+```kotlin
+// TODO: Implementar en TextLibraryViewModel.kt
+- OAuth 2.0 token refresh flow
+- REST API calls para crear carpeta "PromptFlow"
+- Upload de archivos .txt usando multipart/form-data
+- Download y parsing de archivos de Drive
+- Sincronización bidireccional
+```
+
+### **2. Mejoras de UX (Media Prioridad)**
+```kotlin
+// TODO: Funcionalidades adicionales
+- Edición in-place de textos existentes
+- Búsqueda y filtrado en biblioteca
+- Organización por carpetas/tags
+- Export/import de textos
+- Configuración avanzada de teleprompter
+```
+
+### **3. Optimizaciones (Baja Prioridad)**
+```kotlin
+// TODO: Performance y polish
+- Lazy loading para bibliotecas grandes
+- Offline-first architecture
+- Background sync
+- Push notifications para cambios
+- Sharing entre usuarios
+```
+
+## 🔐 **Configuración de Seguridad**
+
+### **Firebase Security Rules** (Futuro)
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/texts/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+  }
 }
 ```
 
-### Sample Text
-Includes sample text explaining app functionality.
+### **Google Drive Scopes Necesarios**
+```kotlin
+// Scope mínimo requerido
+"https://www.googleapis.com/auth/drive.file"
+// Solo archivos creados por la app
+```
 
-## 🐛 Known Issues
+## 📱 **Testing y QA**
 
-### Resolved
-- [x] **Commit signing:** Resolved using `--no-gpg-sign`
-- [x] **GITHUB_TOKEN:** Resolved by clearing environment variable in fish shell
-- [x] **File location:** Initially created in wrong directory, moved successfully
+### **Casos de Prueba Críticos**
+1. **Login Flow**: Sin cuenta → Error amigable → Configurar cuenta → Login exitoso
+2. **Storage Flow**: Local → Login → Migración → Cloud storage
+3. **Teleprompter Core**: Velocidades variables, tamaños de fuente, pausa/play
+4. **Biblioteca**: Crear, seleccionar, eliminar textos
+5. **Estados Edge**: Sin internet, logout durante sync, errores de Drive
 
-### To Resolve
-- [ ] None currently known
+### **Dispositivos de Prueba**
+- ✅ Emulador Android API 34 con Google Play Services
+- 📋 TODO: Dispositivos físicos con diferentes versiones Android
+- 📋 TODO: Tablets y diferentes tamaños de pantalla
 
-## 📊 Project Metrics
+## 🎨 **Design System**
 
-- **Code files:** 14 files
-- **Lines of code:** ~640 lines (initial commit)
-- **Initial commit hash:** 9e49283
-- **Repository size:** 8.43 KiB
+### **Colores y Tema**
+- **Material Design 3** con dynamic theming
+- **Google Blue** (`#4285F4`) para branding de Google
+- **Error colors** para manejo de errores
+- **Surface variants** para cards y elevación
 
-## 🌐 Language Rules (IMPORTANT)
+### **Tipografía**
+- **Headlines**: Para títulos de secciones
+- **Body**: Para texto general
+- **Display**: Para texto del teleprompter (escalable 16sp-48sp)
 
-### Universal Rules for All Cursor Projects
-- **Code, comments, documentation in git:** English ONLY
-- **Variable names, function names:** English ONLY
-- **Commit messages:** English ONLY
-- **README files:** English ONLY (or bilingual if specifically requested)
-- **Chat/conversation communication:** Spanish (for this user)
+## 📊 **Métricas de Éxito**
 
-### Rationale
-- Code maintainability for international teams
-- Standard industry practice
-- Better tooling and AI support
-- Professional presentation
+### **KPIs Técnicos**
+- ✅ App compila sin errores
+- ✅ Google Sign-In funciona al 100%
+- ✅ Almacenamiento local robusto
+- 🚧 Google Drive integration (0% real, 100% UI)
+- ✅ Error handling profesional
 
-## 🔄 Instructions for Future Conversations
+### **KPIs de Usuario**
+- ✅ Teleprompter suave y responsivo
+- ✅ Interfaz intuitiva y clara
+- ✅ Onboarding sin fricción
+- ✅ Recuperación de errores evidente
 
-### For AI Assistant:
-1. Read this file at the start of each conversation
-2. Update this file when important decisions are made
-3. Keep the TODO list updated with progress
-4. Document new issues and their solutions
-5. Remember language rules: code/docs in English, chat in Spanish
-6. Apply English-only rule to ALL projects by default
+## 🔄 **Versionado**
 
-### For Developer:
-- This file should be updated manually or by assistant
-- Serves as living documentation of the project
-- Useful for onboarding new collaborators
-- Must follow English-only rule for all git content
+### **v1.0.0 (Actual)**
+- Core teleprompter functionality
+- Local storage + Google Sign-In
+- Material Design 3 UI
+
+### **v1.1.0 (Próxima)**
+- Real Google Drive integration
+- Edit functionality
+- Search and filtering
+
+### **v2.0.0 (Futuro)**
+- Multi-device sync
+- Advanced teleprompter features
+- Collaboration tools
 
 ---
-**Last Updated:** June 6, 2025
-**Updated By:** Claude (Initial AI Assistant)
-**Next Review:** When implementing significant new features
+
+## 📝 **Notas de Desarrollo**
+
+### **Comandos Útiles**
+```bash
+# Compilar y buildear
+./gradlew build
+
+# Obtener SHA-1 para Firebase
+./gradlew signingReport
+
+# Limpiar build cache
+./gradlew clean
+
+# Instalar en dispositivo/emulador
+./gradlew installDebug
+```
+
+### **Archivos Críticos No Commitear**
+- `app/google-services.json` (contiene claves)
+- `local.properties` (rutas locales)
+- `.env` files (si se agregan)
+
+### **URLs de Referencia**
+- [Firebase Console](https://console.firebase.google.com/project/promptflow-55398)
+- [Google Drive API Docs](https://developers.google.com/drive/api/v3/reference)
+- [Material Design 3](https://m3.material.io/)
+- [Jetpack Compose](https://developer.android.com/jetpack/compose)
+
+---
+
+**Última actualización**: 6 de junio, 2025
+**Estado**: ✅ Compilando, 🚧 Drive integration pendiente
+**Próxima prioridad**: Implementar Google Drive API real
