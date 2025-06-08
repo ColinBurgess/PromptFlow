@@ -5,6 +5,20 @@ All notable changes to PromptFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-06-08
+
+### 🐛 **Fixed**
+- **Local Storage Loss After Login**: Fixed a critical issue where local scripts were deleted after Google login, causing data loss when the app was restarted. Local scripts are now always preserved as backup until real Google Drive API integration is complete.
+
+### 🔄 **Changed**
+- **Migration Logic**: The migration to cloud no longer deletes local data, ensuring offline access and backup persistence until full Drive sync is implemented.
+- **Simultaneous Local & Cloud (Simulated) Save**: When logged in, scripts are saved both locally and in the simulated "cloud" state for UI consistency and data safety.
+- **Robust Deletion Logic**: Deleting a script now removes it from both local and simulated cloud states if present, preventing orphaned or duplicate entries.
+
+### 🛠️ **Technical Improvements**
+- **Offline Support**: All scripts remain available and editable offline, regardless of login state.
+- **Data Integrity**: Ensures scripts persist across sessions and device restarts, providing a seamless and reliable user experience.
+
 ## [1.1.1] - 2024-12-06
 
 ### 🔧 **Horizontal Layout Optimizations & Text Display Fixes**
