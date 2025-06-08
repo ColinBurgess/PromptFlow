@@ -5,6 +5,21 @@ All notable changes to PromptFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2025-06-09
+
+### 🐛 Fixed
+- Resolved Kotlin compiler warnings for unused parameters in `TeleprompterScreen.kt` and its call site in `MainActivity.kt` by removing obsolete parameters (`user`, `onShowLibrary`, `onLogout`, `textLibraryViewModel`).
+- Fixed "unused parameter" warnings for `onLoginRequest` in `AccountTab` and `AccountTabHorizontal` composables within `SettingsScreen.kt` by ensuring the `onLoginRequest` lambda is correctly called.
+- Eliminated "unused variable" warning for `context` in `AccountTabHorizontal` after refactoring login logic.
+- Corrected a temporary compilation error ("An argument is already passed for this parameter") in `AccountTab` caused by a misplaced `onClick` modifier during refactoring.
+
+### 🧹 Chore
+- Replaced hardcoded Spanish UI strings in `TeleprompterScreen.kt` (e.g., "Velocidad de Desplazamiento", "Tamaño de Fuente") with references to `strings.xml` for proper localization.
+- Resolved build errors caused by missing imports for `stringResource` in `TeleprompterScreen.kt`.
+
+### ✨ Added
+- Added a GitHub Action workflow (`.github/workflows/create_release.yml`) to automatically create a Git tag and a GitHub Release when `CHANGELOG.md` is updated on the `main` branch.
+
 ## [1.1.3] - 2025-06-08
 
 ### ✨ Added / Changed
@@ -210,7 +225,7 @@ implementation("androidx.navigation:navigation-compose:2.7.5")
 
 #### 🔧 **Build System**
 - **Successful Compilation**: Resolves all dependency conflicts
-- **Debug SHA-1**: Configured for Firebase (`***REMOVED***`)
+- **Debug SHA-1**: Configured for Firebase (`2F:10:AD:A8:9F:DC:F2:84:7D:49:C0:1E:5A:B2:71:C3:57:42:7E:B4`)
 - **Package Structure**: Clean organization with dedicated ViewModels and screens
 
 #### 📋 **Known Limitations**

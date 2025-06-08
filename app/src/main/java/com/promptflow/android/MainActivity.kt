@@ -79,14 +79,7 @@ fun PromptFlowApp() {
             ) {
                 composable("teleprompter") {
                     TeleprompterScreen(
-                        user = authState.user,
                         onShowSettings = { navController.navigate("settings") },
-                        onShowLibrary = { navController.navigate("settings") }, // Redirect to settings library tab
-                        onLogout = {
-                            authViewModel.signOut()
-                            textLibraryViewModel.loadSavedTexts()
-                        },
-                        textLibraryViewModel = textLibraryViewModel,
                         initialText = currentText,
                         initialSpeed = currentSpeed,
                         initialFontSize = currentFontSize,

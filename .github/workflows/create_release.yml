@@ -1,0 +1,81 @@
+name: Create Release and Tag from CHANGELOG
+
+on:
+  push:
+    branches:
+      - main # Adjust if your default branch is 'master' or other
+    paths:
+      - 'CHANGELOG.md'
+
+permissions:
+  contents: write # Required to create tags and releases
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to get all tags and commit history
+
+      - name: Extract version and release notes
+        id: changelog_parser
+        run: |
+          # Extract version (e.g., 1.1.4), allows for an optional 'v' prefix in changelog
+          VERSION=$(grep -m 1 '^## \[' CHANGELOG.md | sed -E 's/^## \[v?([0-9]+\.[0-9]+\.[0-9]+)\].*$/\1/')
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version from CHANGELOG.md"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Extracted version: $VERSION"
+
+          # Define the tag name (e.g., v1.1.4)
+          TAG_NAME="v$VERSION"
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_ENV"
+          echo "Tag to be created: $TAG_NAME"
+
+          # Extract release notes for the current version
+          # Awk script: start printing *after* the line with the current version header,
+          # stop printing if another version header (## [) is found or EOF.
+          NOTES=$(awk -v version_pattern="^##\\[v?$VERSION\\]" '
+            BEGIN {printing=0; body=""}
+            $0 ~ version_pattern {printing=1; next} # Start printing after this line
+            /^##\\[/ && printing {printing=0}      # Stop if next version header is found
+            printing {body=body $0 "\n"}
+            END {print body}
+          ' CHANGELOG.md | sed '/^$/N;/^\n$/D' | sed 's/\n$//') # Clean up extra newlines
+
+          if [ -z "$NOTES" ]; then
+            echo "Warning: Could not extract release notes. Using a generic message for release body."
+            NOTES="Release $TAG_NAME. See CHANGELOG.md for details."
+          fi
+
+          # GitHub CLI needs notes from a file or stdin. Writing to a file is cleaner.
+          echo "$NOTES" > RELEASE_NOTES.md
+          echo "Release notes (first 5 lines from RELEASE_NOTES.md):"
+          head -n 5 RELEASE_NOTES.md
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          if git rev-parse "${{ env.TAG_NAME }}" >/dev/null 2>&1; then
+            echo "Tag ${{ env.TAG_NAME }} already exists. Skipping release creation."
+            echo "skip_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tag ${{ env.TAG_NAME }} does not exist. Proceeding with release."
+            echo "skip_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release and Tag
+        if: steps.check_tag.outputs.skip_release == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # TAG_NAME is already in GITHUB_ENV from previous step
+        run: |
+          gh release create "${{ env.TAG_NAME }}" \
+            --title "Release ${{ env.TAG_NAME }}" \
+            --notes-file RELEASE_NOTES.md \
+            --target "$GITHUB_SHA" # Tag the commit that triggered the workflow
+          echo "Created GitHub release and tag ${{ env.TAG_NAME }}"

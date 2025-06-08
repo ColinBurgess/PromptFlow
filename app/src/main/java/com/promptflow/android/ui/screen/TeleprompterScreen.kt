@@ -23,8 +23,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseUser
+import com.promptflow.android.R
 import com.promptflow.android.viewmodel.TextLibraryViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,11 +34,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeleprompterScreen(
-    user: FirebaseUser?,
     onShowSettings: () -> Unit,  // Updated to show full settings screen
-    onShowLibrary: () -> Unit,   // This can be removed since it's now in settings
-    onLogout: () -> Unit,
-    textLibraryViewModel: TextLibraryViewModel = viewModel(),
     initialText: String = sampleText,     // Allow passing text from settings
     initialSpeed: Float = 8f,             // Allow passing speed from settings
     initialFontSize: Float = 24f,         // Allow passing font size from settings
@@ -244,7 +242,7 @@ private fun LandscapeLayout(
                     IconButton(onClick = onPlayPauseClick) {
                         Icon(
                             if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            contentDescription = if (isPlaying) stringResource(R.string.pause) else stringResource(R.string.play),
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)
                         )
@@ -252,7 +250,7 @@ private fun LandscapeLayout(
 
                     // Speed control
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Speed: ${speed.toInt()}x", color = Color.White, fontSize = 12.sp)
+                        Text(stringResource(R.string.teleprompter_speed_label, speed.toInt()), color = Color.White, fontSize = 12.sp)
                         Slider(
                             value = speed,
                             onValueChange = onSpeedChange,
@@ -263,7 +261,7 @@ private fun LandscapeLayout(
 
                     // Font size control
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Size: ${fontSize.toInt()}sp", color = Color.White, fontSize = 12.sp)
+                        Text(stringResource(R.string.teleprompter_size_label, fontSize.toInt()), color = Color.White, fontSize = 12.sp)
                         Slider(
                             value = fontSize,
                             onValueChange = onFontSizeChange,
@@ -276,7 +274,7 @@ private fun LandscapeLayout(
                     IconButton(onClick = onResetClick) {
                         Icon(
                             Icons.Default.Refresh,
-                            contentDescription = "Reset Position",
+                            contentDescription = stringResource(R.string.content_desc_reset_position),
                             tint = Color.White
                         )
                     }
@@ -285,7 +283,7 @@ private fun LandscapeLayout(
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             Icons.Default.Settings,
-                            contentDescription = "Settings",
+                            contentDescription = stringResource(R.string.settings),
                             tint = if (isPlaying) Color.Gray else Color.White
                         )
                     }
@@ -419,7 +417,7 @@ private fun PortraitTabletLayout(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = "Velocidad: ${speed.toInt()}x",
+                                text = stringResource(R.string.teleprompter_speed_label, speed.toInt()),
                                 color = Color.White,
                                 fontSize = 14.sp,
                                 style = MaterialTheme.typography.labelMedium
@@ -446,7 +444,7 @@ private fun PortraitTabletLayout(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = "Tamaño: ${fontSize.toInt()}sp",
+                                text = stringResource(R.string.teleprompter_size_label, fontSize.toInt()),
                                 color = Color.White,
                                 fontSize = 14.sp,
                                 style = MaterialTheme.typography.labelMedium

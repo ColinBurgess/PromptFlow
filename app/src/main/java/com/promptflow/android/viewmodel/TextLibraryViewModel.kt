@@ -69,7 +69,7 @@ class TextLibraryViewModel : ViewModel() {
             } catch (e: Exception) {
                 println("❌ Error initializing Drive access: ${e.message}")
                 _state.value = _state.value.copy(
-                    error = "Error conectando con Google Drive: ${e.message}"
+                    error = "error_drive_connect"
                 )
             }
         }
@@ -96,7 +96,7 @@ class TextLibraryViewModel : ViewModel() {
                 println("❌ Error loading texts from Drive: ${e.message}")
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    error = "Error cargando textos desde Google Drive: ${e.message}"
+                    error = "error_drive_load"
                 )
             }
         }
@@ -123,7 +123,7 @@ class TextLibraryViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
-                    error = "Error loading local texts: ${e.message}"
+                    error = "error_local_load"
                 )
             }
         }

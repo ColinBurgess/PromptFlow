@@ -1,5 +1,7 @@
 package com.promptflow.android.ui.screen
 
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -31,6 +33,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.promptflow.android.viewmodel.AuthenticationViewModel
 import com.promptflow.android.viewmodel.SavedText
 import com.promptflow.android.viewmodel.TextLibraryViewModel
+import com.promptflow.android.R // Import for R class
 import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,11 +67,13 @@ fun SettingsScreen(
     val isTablet = screenWidth > 600.dp
 
     val tabs = listOf(
-        "Editor" to Icons.Default.Edit,
-        "Ajustes" to Icons.Default.Settings,
-        "Biblioteca" to Icons.Default.LibraryBooks,
-        "Cuenta" to Icons.Default.AccountCircle
+        stringResource(id = R.string.editor) to Icons.Default.Edit,
+        stringResource(id = R.string.settings) to Icons.Default.Settings,
+        stringResource(id = R.string.library) to Icons.Default.LibraryBooks,
+        stringResource(id = R.string.account) to Icons.Default.AccountCircle
     )
+
+    
 
     Scaffold(
         topBar = {
@@ -94,13 +99,13 @@ fun SettingsScreen(
                         ) {
                             Icon(
                                 Icons.Default.ArrowBack,
-                                contentDescription = "Volver",
+                                contentDescription = stringResource(id = R.string.action_back),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Configuración",
+                            text = stringResource(id = R.string.settings),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
                         )
@@ -109,10 +114,10 @@ fun SettingsScreen(
             } else {
                 // Standard TopAppBar for portrait
                 TopAppBar(
-                    title = { Text("Configuración") },
+                    title = { Text(stringResource(id = R.string.settings)) },
                     navigationIcon = {
                         IconButton(onClick = onBackPressed) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                            Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = R.string.action_back))
                         }
                     }
                 )
@@ -185,19 +190,19 @@ fun SettingsScreen(
     showDeleteDialog?.let { textToDelete ->
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Eliminar Texto") },
-            text = { Text("¿Estás seguro de que quieres eliminar '${textToDelete.title}'?") },
+            title = { Text(stringResource(id = R.string.delete_text_dialog_title)) },
+            text = { Text(stringResource(id = R.string.delete_text_dialog_message, textToDelete.title)) },
             confirmButton = {
                 TextButton(onClick = {
                     textLibraryViewModel.deleteText(textToDelete.id)
                     showDeleteDialog = null
                 }) {
-                    Text("Eliminar")
+                    Text(stringResource(id = R.string.action_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("Cancelar")
+                    Text(stringResource(id = R.string.action_cancel))
                 }
             }
         )
@@ -349,7 +354,7 @@ private fun TextEditorTabHorizontal(
     ) {
         // Compact header
         Text(
-            text = "Editor de Texto del Teleprompter",
+            text = stringResource(id = R.string.text_editor),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -360,7 +365,7 @@ private fun TextEditorTabHorizontal(
             value = currentText,
             onValueChange = onTextChanged,
             modifier = Modifier.fillMaxSize(),
-            placeholder = { Text("Escribe aquí el texto de tu teleprompter...") },
+            placeholder = { Text(stringResource(id = R.string.teleprompter_text_placeholder)) },
             textStyle = MaterialTheme.typography.bodyMedium.copy(
                 lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.3f
             )
@@ -391,7 +396,7 @@ private fun DefaultsTabHorizontal(
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 Text(
-                    text = "Velocidad por Defecto",
+                    text = stringResource(id = R.string.default_speed_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -445,7 +450,7 @@ private fun DefaultsTabHorizontal(
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 Text(
-                    text = "Tamaño de Fuente por Defecto",
+                    text = stringResource(id = R.string.default_font_size_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -562,7 +567,7 @@ private fun LibraryTabHorizontal(
             ) {
                 Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Agregar")
+                Text(stringResource(id = R.string.action_save))
             }
         }
 
@@ -592,12 +597,12 @@ private fun LibraryTabHorizontal(
                         Icon(Icons.Default.LibraryBooks, null, modifier = Modifier.size(32.dp))
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Tu Biblioteca está Vacía",
+                            text = stringResource(id = R.string.library_empty),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Agrega tu primer texto para comenzar",
+                            text = stringResource(id = R.string.library_add_first_text_prompt),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -644,7 +649,6 @@ private fun AccountTabHorizontal(
     onLoginRequest: () -> Unit,
     onLogoutRequest: () -> Unit
 ) {
-    val context = LocalContext.current
 
     Row(
         modifier = Modifier
@@ -671,20 +675,20 @@ private fun AccountTabHorizontal(
                     )
 
                     Text(
-                        text = "Accede a Google Drive",
+                        text = stringResource(id = R.string.sign_in_to_google_drive),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
 
                     Text(
-                        text = "Sincroniza tus textos en la nube",
+                        text = stringResource(id = R.string.sync_texts_cloud_title),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
 
                     ElevatedButton(
-                        onClick = { authViewModel.signInWithGoogle(context) },
+                        onClick = { onLoginRequest() },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         enabled = !authState.isLoading
                     ) {
@@ -693,7 +697,7 @@ private fun AccountTabHorizontal(
                         } else {
                             Text("G", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Continuar con Google")
+                            Text(stringResource(id = R.string.continue_with_google))
                         }
                     }
                 }
@@ -711,15 +715,15 @@ private fun AccountTabHorizontal(
                     verticalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Text(
-                        text = "Beneficios",
+                        text = stringResource(id = R.string.benefits),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        BenefitItem(Icons.Default.Cloud, "Sincronización", "Accede desde cualquier dispositivo")
-                        BenefitItem(Icons.Default.Backup, "Respaldo", "Nunca pierdas tus textos")
-                        BenefitItem(Icons.Default.Share, "Compartir", "Comparte fácilmente")
+                        BenefitItem(Icons.Default.Cloud, stringResource(id = R.string.benefit_cloud_sync_title), stringResource(id = R.string.benefit_cloud_sync_description))
+                        BenefitItem(Icons.Default.Backup, stringResource(id = R.string.benefit_backup_title), stringResource(id = R.string.benefit_backup_description))
+                        BenefitItem(Icons.Default.Share, stringResource(id = R.string.benefit_share_title), stringResource(id = R.string.benefit_share_description))
                     }
                 }
             }
@@ -747,7 +751,7 @@ private fun AccountTabHorizontal(
 
                         Column {
                             Text(
-                                text = user.displayName ?: "Usuario de Google",
+                                text = user.displayName ?: stringResource(id = R.string.google_user),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -772,12 +776,12 @@ private fun AccountTabHorizontal(
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
                                 Text(
-                                    text = "Conectado a Google Drive",
+                                    text = stringResource(id = R.string.connected_to_google_drive),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Tus textos se sincronizan automáticamente",
+                                    text = stringResource(id = R.string.texts_synced_automatically),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -793,7 +797,7 @@ private fun AccountTabHorizontal(
                     ) {
                         Icon(Icons.Default.Logout, null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cerrar Sesión")
+                        Text(stringResource(id = R.string.sign_out))
                     }
                 }
             }
@@ -886,7 +890,7 @@ private fun TextEditorTab(
             .padding(16.dp)
     ) {
         Text(
-            text = "Editor de Texto del Teleprompter",
+            text = stringResource(id = R.string.text_editor),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -897,7 +901,7 @@ private fun TextEditorTab(
             value = currentText,
             onValueChange = onTextChanged,
             modifier = Modifier.fillMaxSize(),
-            placeholder = { Text("Escribe aquí el texto de tu teleprompter...") },
+            placeholder = { Text(stringResource(id = R.string.teleprompter_text_placeholder)) },
             minLines = if (isTablet) 15 else 10,
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.4f
@@ -920,7 +924,7 @@ private fun DefaultsTab(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Text(
-            text = "Default Settings",
+            text = stringResource(id = R.string.default_settings),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -934,7 +938,7 @@ private fun DefaultsTab(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Default Speed: ${currentSpeed.toInt()}x",
+                    text = stringResource(id = R.string.default_speed),
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -975,7 +979,7 @@ private fun DefaultsTab(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Default Font Size: ${currentFontSize.toInt()}sp",
+                    text = stringResource(id = R.string.default_font_size),
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1049,13 +1053,13 @@ private fun LibraryTab(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Almacenamiento Local",
+                            text = stringResource(id = R.string.storage_local),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Tus textos se guardan en este dispositivo. Inicia sesión para sincronizar con Google Drive.",
+                            text = stringResource(id = R.string.local_storage_info),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -1084,13 +1088,13 @@ private fun LibraryTab(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Google Drive",
+                            text = stringResource(id = R.string.storage_google_drive),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = "Tus textos se guardan como archivos .txt en tu Google Drive y se sincronizan automáticamente.",
+                            text = stringResource(id = R.string.google_drive_sync_info),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
@@ -1137,9 +1141,9 @@ private fun LibraryTab(
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = if (user == null)
-                                    "Tu Biblioteca Local está Vacía"
+                                    stringResource(id = R.string.library_empty_local_title)
                                 else
-                                    "Tu Biblioteca está Vacía",
+                                    stringResource(id = R.string.library_empty),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
@@ -1147,9 +1151,9 @@ private fun LibraryTab(
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = if (user == null)
-                                    "Comienza agregando tu primer texto de teleprompter. Se guardará localmente en este dispositivo."
+                                    stringResource(id = R.string.library_empty_prompt_local)
                                 else
-                                    "Comienza agregando tu primer texto de teleprompter. Se guardará como archivo .txt en tu Google Drive.",
+                                    stringResource(id = R.string.library_empty_prompt_drive),
                                 style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1167,7 +1171,7 @@ private fun LibraryTab(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Agregar Primer Texto")
+                                Text(stringResource(id = R.string.add_first_text_button))
                             }
                         }
                     }
@@ -1183,16 +1187,16 @@ private fun LibraryTab(
                             modifier = Modifier.padding(12.dp)
                         ) {
                             Text(
-                                text = "💡 Consejos:",
+                                text = stringResource(id = R.string.tips_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "• Usa el Editor para escribir tu contenido\n" +
-                                      "• Guarda textos frecuentes para acceso rápido\n" +
-                                      "• Cada texto puede tener un título personalizado",
+                                text = stringResource(id = R.string.tip_use_editor) + "\n" +
+                                      stringResource(id = R.string.tip_save_frequent_texts) + "\n" +
+                                      stringResource(id = R.string.tip_custom_title),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -1257,7 +1261,7 @@ private fun AccountTab(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Cuenta",
+            text = stringResource(id = R.string.account),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -1301,7 +1305,7 @@ private fun AccountTab(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "Accede a Google Drive",
+                        text = stringResource(id = R.string.sign_in_to_google_drive),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -1310,7 +1314,7 @@ private fun AccountTab(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Inicia sesión para sincronizar tus textos con Google Drive",
+                        text = stringResource(id = R.string.signin_to_sync_google_drive),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1337,17 +1341,17 @@ private fun AccountTab(
                                             Icons.Default.AccountCircle
                                         else
                                             Icons.Default.Error,
-                                        contentDescription = "Error",
+                                        contentDescription = stringResource(id = R.string.content_description_error_icon),
                                         modifier = Modifier.size(24.dp),
                                         tint = MaterialTheme.colorScheme.onErrorContainer
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = when {
-                                            error.contains("No hay cuentas de Google") -> "Configura una cuenta de Google"
-                                            error.contains("cancelled") -> "Operación cancelada"
-                                            error.contains("network") -> "Error de conexión"
-                                            else -> "Error de autenticación"
+                                            error.contains("error_no_google_account") -> stringResource(id = R.string.error_configure_google_account_title)
+                                            error.contains("error_signin_cancelled") -> stringResource(id = R.string.error_operation_cancelled_title)
+                                            error.contains("error_signin_google") && error.contains("network", ignoreCase = true) -> stringResource(id = R.string.error_connection_error_title)
+                                            else -> stringResource(id = R.string.error_authentication_error_title)
                                         },
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
@@ -1395,7 +1399,7 @@ private fun AccountTab(
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Abrir Configuración")
+                                        Text(stringResource(id = R.string.open_settings))
                                     }
                                 }
                             }
@@ -1406,10 +1410,7 @@ private fun AccountTab(
 
                     // Google Sign-In Button - ENHANCED STYLE
                     ElevatedButton(
-                        onClick = {
-                            println("🔵 BUTTON CLICKED! Starting Google Sign-In process...")
-                            authViewModel.signInWithGoogle(context)
-                        },
+                        onClick = { onLoginRequest() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -1438,7 +1439,7 @@ private fun AccountTab(
                                     strokeWidth = 2.dp
                                 )
                                 Text(
-                                    text = "Iniciando sesión...",
+                                    text = stringResource(id = R.string.signing_in),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Medium,
                                     color = Color(0xFF1F1F1F)
@@ -1456,7 +1457,7 @@ private fun AccountTab(
                                     color = Color(0xFF4285F4)
                                 )
                                 Text(
-                                    text = "Continuar con Google",
+                                    text = stringResource(id = R.string.continue_with_google),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Medium,
                                     color = Color(0xFF1F1F1F)
@@ -1469,7 +1470,7 @@ private fun AccountTab(
 
                     // Benefits section - ENHANCED WITH ICONS
                     Text(
-                        text = "Beneficios de iniciar sesión:",
+                        text = stringResource(id = R.string.benefits),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -1482,18 +1483,18 @@ private fun AccountTab(
                     ) {
                         BenefitItem(
                             icon = Icons.Default.Cloud,
-                            title = "Sincronización en la Nube",
-                            description = "Accede a tus textos desde cualquier dispositivo"
+                            title = stringResource(id = R.string.benefit_cloud_sync_title),
+                            description = stringResource(id = R.string.benefit_cloud_sync_description)
                         )
                         BenefitItem(
                             icon = Icons.Default.Backup,
-                            title = "Respaldo Automático",
-                            description = "Nunca pierdas tus textos importantes"
+                            title = stringResource(id = R.string.benefit_backup_title),
+                            description = stringResource(id = R.string.benefit_backup_description)
                         )
                         BenefitItem(
                             icon = Icons.Default.Share,
-                            title = "Compartir Fácil",
-                            description = "Comparte textos con otros dispositivos al instante"
+                            title = stringResource(id = R.string.benefit_share_title),
+                            description = stringResource(id = R.string.benefit_share_description)
                         )
                     }
                 }
@@ -1538,7 +1539,7 @@ private fun AccountTab(
 
                         Column {
                             Text(
-                                text = user.displayName ?: "Usuario de Google",
+                                text = user.displayName ?: stringResource(id = R.string.google_user),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -1572,13 +1573,13 @@ private fun AccountTab(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Conectado a Google Drive",
+                                    text = stringResource(id = R.string.connected_to_google_drive),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "Tus textos se sincronizan automáticamente",
+                                    text = stringResource(id = R.string.texts_synced_automatically),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1606,7 +1607,7 @@ private fun AccountTab(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cerrar Sesión")
+                        Text(stringResource(id = R.string.sign_out))
                     }
                 }
             }
@@ -1745,7 +1746,7 @@ private fun SaveTextDialog(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cancel")
+                        Text(stringResource(id = R.string.cancel))
                     }
 
                     Button(
@@ -1763,7 +1764,7 @@ private fun SaveTextDialog(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Save")
+                        Text(stringResource(id = R.string.save))
                     }
                 }
 
@@ -1776,8 +1777,8 @@ private fun SaveTextDialog(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Title") },
-                    placeholder = { Text("Enter a descriptive title...") },
+                    label = { Text(stringResource(id = R.string.label_title)) },
+                    placeholder = { Text(stringResource(id = R.string.placeholder_title)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -1785,8 +1786,8 @@ private fun SaveTextDialog(
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("Content") },
-                    placeholder = { Text("Enter your teleprompter text here...") },
+                    label = { Text(stringResource(id = R.string.label_content)) },
+                    placeholder = { Text(stringResource(id = R.string.placeholder_content)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp), // Fixed height

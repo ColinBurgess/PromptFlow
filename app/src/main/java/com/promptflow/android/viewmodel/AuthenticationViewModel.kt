@@ -55,7 +55,7 @@ class AuthenticationViewModel : ViewModel() {
                 // Web Client ID from Firebase Console
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId("***REMOVED***")
+                    .setServerClientId("421864875906-257v99qbn9v2sn2vud8edjjb1o92gkg7.apps.googleusercontent.com")
                     .build()
                 println("🔍 GoogleIdOption configured")
 
@@ -80,22 +80,16 @@ class AuthenticationViewModel : ViewModel() {
                 // Handle specific error types with user-friendly messages
                 val userFriendlyError = when (e.type) {
                     "android.credentials.GetCredentialException.TYPE_NO_CREDENTIAL" -> {
-                        "No hay cuentas de Google configuradas en este dispositivo. Para usar esta función:\n\n" +
-                        "1. Ve a Configuración > Cuentas\n" +
-                        "2. Toca 'Agregar cuenta'\n" +
-                        "3. Selecciona 'Google'\n" +
-                        "4. Inicia sesión con tu cuenta\n" +
-                        "5. Vuelve a la app e intenta de nuevo"
+                        "error_no_google_account"
                     }
                     "android.credentials.GetCredentialException.TYPE_USER_CANCELED" -> {
-                        "Inicio de sesión cancelado. Si deseas sincronizar tus textos en la nube, intenta de nuevo."
+                        "error_signin_cancelled"
                     }
                     "android.credentials.GetCredentialException.TYPE_INTERRUPTED" -> {
-                        "El proceso de inicio de sesión fue interrumpido. Por favor, intenta de nuevo."
+                        "error_signin_interrupted"
                     }
                     else -> {
-                        "Error al iniciar sesión con Google: ${e.message}\n\n" +
-                        "Verifica que tengas una cuenta de Google configurada en tu dispositivo y que el dispositivo tenga conexión a internet."
+                        "error_signin_google"
                     }
                 }
 
