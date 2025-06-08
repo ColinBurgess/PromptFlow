@@ -5,6 +5,15 @@ All notable changes to PromptFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2025-06-08
+
+### ✨ Added / Changed
+- Major update: PROJECT_CONTEXT.md fully translated to English, now includes detailed sections on technical architecture, adaptive layouts, Gradle/dev notes, and onboarding best practices.
+- Improved documentation for project structure, modules, and dependencies.
+- UI/UX: SettingsScreen tab navigation optimized for tablets—side menu is now scrollable and tab height reduced for better accessibility on small screens.
+- Adaptive layout fixes: Ensured all tabs (including 'Account') are always visible in horizontal/tablet mode.
+- Minor code cleanup and typo fixes in SettingsScreen.kt.
+
 ## [1.1.2] - 2025-06-08
 
 ### 🐛 **Fixed**

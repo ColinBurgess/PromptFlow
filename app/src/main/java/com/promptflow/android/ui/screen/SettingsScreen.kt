@@ -15,9 +15,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
@@ -244,15 +244,16 @@ private fun TabletLandscapeLayout(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp), // Reduced from 12dp to 8dp
-                verticalArrangement = Arrangement.SpaceEvenly,
+                    .padding(8.dp)
+                    .verticalScroll(rememberScrollState()), // Permite scroll si no caben todos los tabs
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 tabs.forEachIndexed { index, (title, icon) ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(90.dp) // Increased to 90dp for 2-line text
+                            .height(70.dp) // Reducido para asegurar visibilidad de todos los tabs
                             .clickable { onTabSelected(index) },
                         colors = CardDefaults.cardColors(
                             containerColor = if (selectedTab == index)
