@@ -47,17 +47,32 @@ Follow these steps to configure Firebase Authentication and Firestore for Prompt
 3. Click **"Download google-services.json"**
 4. **IMPORTANT**: Place this file in: `app/google-services.json`
 
-## 🔧 Step 6: Get Web Client ID
+## 🔧 Step 6: Configure Web Client ID
 
-1. In Firebase Console, go to **Project Settings**
-2. Go to **"General"** tab
-3. In "Your apps" section, find your Android app
-4. Click the app to expand details
-5. Find and copy the **"Web client ID"**
-6. Update `AuthenticationViewModel.kt` line 51:
-   ```kotlin
-   .setServerClientId("YOUR_WEB_CLIENT_ID") // Replace with your actual Web Client ID
-   ```
+1.  **Get Web Client ID from Firebase Console**:
+    *   In Firebase Console, go to **Project Settings** (gear icon).
+    *   Under the **"General"** tab, in the "Your apps" section, find and select your Android app.
+    *   Locate and copy the **"Web client ID"** (it usually ends with `apps.googleusercontent.com`).
+
+2.  **Add Web Client ID to `local.properties`**:
+    *   In your Android Studio project, open or create the file named `local.properties` in the root directory of your project (e.g., `/PromptFlow/local.properties`).
+    *   Add the following line, replacing `YOUR_COPIED_WEB_CLIENT_ID` with the ID you copied from Firebase:
+        ```properties
+        GOOGLE_WEB_CLIENT_ID=YOUR_COPIED_WEB_CLIENT_ID
+        ```
+        *   **Important:** Do NOT include quotes around the ID in this file.
+        *   This `local.properties` file is (and should be) listed in your `.gitignore` file to prevent your Web Client ID from being committed to version control.
+
+3.  **Verify Android SDK Path (if not already set)**:
+    *   While you have `local.properties` open, ensure it also contains the path to your Android SDK. If not, add it:
+        ```properties
+        sdk.dir=/path/to/your/android/sdk 
+        ```
+        (e.g., `/Users/your_username/Library/Android/sdk` on macOS, or `C:\\Users\\your_username\\AppData\\Local\\Android\\Sdk` on Windows).
+
+4.  **Sync Gradle**:
+    *   After saving `local.properties`, Android Studio should prompt you to "Sync Now". Click it.
+    *   This step is crucial as it allows Gradle to read the `GOOGLE_WEB_CLIENT_ID` from `local.properties` and make it available to your app via the generated `BuildConfig.java` file. The application code (`AuthenticationViewModel.kt`) is already set up to use `BuildConfig.GOOGLE_WEB_CLIENT_ID`.
 
 ## 🛡️ Step 7: Setup Firestore Security Rules (Production)
 

@@ -225,7 +225,7 @@ implementation("androidx.navigation:navigation-compose:2.7.5")
 
 #### 🔧 **Build System**
 - **Successful Compilation**: Resolves all dependency conflicts
-- **Debug SHA-1**: Configured for Firebase (`2F:10:AD:A8:9F:DC:F2:84:7D:49:C0:1E:5A:B2:71:C3:57:42:7E:B4`)
+- **Debug SHA-1**: Configured for Firebase (`SOMESHA`)
 - **Package Structure**: Clean organization with dedicated ViewModels and screens
 
 #### 📋 **Known Limitations**

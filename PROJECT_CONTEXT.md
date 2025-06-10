@@ -268,8 +268,8 @@ implementation("com.google.code.gson:gson:2.10.1") // For serializing/deserializ
 ### 3.2. Firebase Setup
 -   **Project Name (Firebase Console):** `promptflow-55398`
 -   **Application Package Name:** `com.promptflow.android`
--   **Web Client ID (for Google Sign-In):** `421864875906-257v99qbn9v2sn2vud8edjjb1o92gkg7.apps.googleusercontent.com` (Should be stored securely, e.g., in `strings.xml` or build config, not hardcoded directly if possible, or fetched from `google-services.json` processing).
--   **SHA-1 Debug Fingerprint:** `2F:10:AD:A8:9F:DC:F2:84:7D:49:C0:1E:5A:B2:71:C3:57:42:7E:B4` (Ensure this is added to the Firebase project settings for debug builds).
+-   **Web Client ID (for Google Sign-In):** `YOURIDHERE` (Should be stored securely, e.g., in `strings.xml` or build config, not hardcoded directly if possible, or fetched from `google-services.json` processing).
+-   **SHA-1 Debug Fingerprint:** `YOURSHAHERE` (Ensure this is added to the Firebase project settings for debug builds).
 
 ## 4. 🚀 Current Application State
 

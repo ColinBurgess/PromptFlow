@@ -1,5 +1,7 @@
 package com.promptflow.android.viewmodel
 
+import com.promptflow.android.BuildConfig
+
 import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -55,7 +57,7 @@ class AuthenticationViewModel : ViewModel() {
                 // Web Client ID from Firebase Console
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId("421864875906-257v99qbn9v2sn2vud8edjjb1o92gkg7.apps.googleusercontent.com")
+                    .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
                     .build()
                 println("🔍 GoogleIdOption configured")
 

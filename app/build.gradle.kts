@@ -4,6 +4,8 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+import java.util.Properties
+
 android {
     namespace = "com.promptflow.android"
     compileSdk = 34
@@ -19,6 +21,17 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Read GOOGLE_WEB_CLIENT_ID from local.properties
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { localProperties.load(it) }
+        }
+        val googleWebClientId = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "YOUR_WEB_CLIENT_ID_NOT_FOUND_IN_LOCAL_PROPERTIES")
+
+        // Make it available in BuildConfig
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${googleWebClientId}\"")
     }
 
     buildTypes {
@@ -40,6 +53,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true // Ensure buildConfig is enabled
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.4"
