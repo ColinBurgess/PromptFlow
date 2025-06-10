@@ -107,10 +107,17 @@ After completing setup:
 ## 🚨 Common Issues & Solutions
 
 ### Issue: "Web client ID not found"
-**Solution**: Make sure you copied the **Web client ID** (not Android client ID) from Firebase Console.
+**Solution**: Make sure you copied the **Web client ID** (OAuth 2.0 client ID of type 'Web application') from your Google Cloud Console credentials page (linked from your Firebase project) and placed it in `local.properties` as `GOOGLE_WEB_CLIENT_ID`. Do not use an Android client ID here.
 
 ### Issue: "google-services.json not found"
 **Solution**: Ensure the file is placed exactly at `app/google-services.json`
+
+### Issue: "[28444] Developer console is not set up correctly" or similar Google Sign-In errors
+**Solution**:
+- This often indicates a mismatch or misconfiguration related to your OAuth client IDs or SHA-1 fingerprints.
+- **Crucially, ensure the `GOOGLE_WEB_CLIENT_ID` in your `local.properties` file is the **Web client ID** (Type 3) from your Google Cloud/Firebase console, NOT an Android OAuth client ID.
+- Double-check that all required SHA-1 fingerprints (debug and release) are correctly added to your Firebase project settings for the Android app.
+- Download a fresh `google-services.json` after making any changes in the Firebase console.
 
 ### Issue: "SHA-1 fingerprint mismatch"
 **Solution**:

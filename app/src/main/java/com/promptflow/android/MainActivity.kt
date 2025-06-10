@@ -97,7 +97,7 @@ fun PromptFlowApp() {
                             currentText = text
                             navController.popBackStack()
                         },
-                        onLoginRequest = { /* Handled by SettingsScreen internally */ },
+                        onLoginRequest = { authViewModel.signInWithGoogle(context) },
                         onLogoutRequest = {
                             authViewModel.signOut()
                             textLibraryViewModel.loadSavedTexts()

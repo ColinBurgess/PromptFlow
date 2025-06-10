@@ -5,6 +5,12 @@ All notable changes to PromptFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2025-06-10
+
+### 🐛 Fixed
+- **Google Sign-In from Account Settings**: Resolved an issue where the "Continue with Google" button in the Account tab of the Settings screen did not trigger the sign-in flow. This was due to an empty `onLoginRequest` lambda in `MainActivity.kt`. The lambda now correctly calls `authViewModel.signInWithGoogle(context)`.
+- **Google Web Client ID Configuration**: Corrected a misconfiguration of the `GOOGLE_WEB_CLIENT_ID` in `local.properties`, ensuring it matches the Web OAuth client ID from `google-services.json`, which resolved the `[28444] Developer console is not set up correctly` error.
+
 ## [1.1.4] - 2025-06-09
 
 ### 🐛 Fixed
