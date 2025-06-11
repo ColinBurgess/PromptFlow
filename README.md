@@ -4,6 +4,33 @@
 
 A modern, feature-rich teleprompter application for Android with Google Sign-In integration and cloud synchronization capabilities. **Now supports both landscape and portrait orientations with adaptive layouts optimized for tablets and phones. December 2024 update includes major horizontal layout optimizations.**
 
+## 📱 Screenshots & Demo
+
+Overview of the PromptFlow user interface on different devices and orientations:
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/UI01.png" alt="PromptFlow UI Screenshot 1" width="350"/>
+      <br><sub><em>Eg: Main teleprompter screen</em></sub>
+    </td>
+    <td align="center">
+      <img src="docs/images/UI02.png" alt="PromptFlow UI Screenshot 2" width="350"/>
+      <br><sub><em>Eg: Google integration</em></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/images/UI03.png" alt="PromptFlow UI Screenshot 3" width="350"/>
+      <br><sub><em>Eg: Text library</em></sub>
+    </td>
+    <td align="center">
+      <img src="docs/images/UI04.png" alt="PromptFlow UI Screenshot 4" width="350"/>
+      <br><sub><em>Eg: Text editor</em></sub>
+    </td>
+  </tr>
+</table>
+
 ## ✨ Features
 
 ### 🎬 **Core Teleprompter**
@@ -117,20 +144,7 @@ cd PromptFlow
 - **Portrait Tablet**: Side panel with vertical layout
 - **Portrait Phone**: Traditional bottom controls
 
-## 📱 Screenshots & Demo
 
-### **Phone Experience**
-- **Portrait**: Tab navigation with teleprompter text and bottom controls
-- **Landscape**: Full-screen teleprompter with overlay controls
-
-### **Tablet Experience**
-- **Portrait**: Side-by-side layout with text area and control panel
-- **Landscape**: NavigationRail for settings, optimized teleprompter view
-
-### **Adaptive Features**
-- Controls automatically position based on screen size and orientation
-- Text alignment adapts (center for landscape, left for portrait)
-- Font sizes and spacing optimized for different screen densities
 
 ## 🔧 Development Setup
 

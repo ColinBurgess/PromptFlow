@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Google Sign-In from Account Settings**: Resolved an issue where the "Continue with Google" button in the Account tab of the Settings screen did not trigger the sign-in flow. This was due to an empty `onLoginRequest` lambda in `MainActivity.kt`. The lambda now correctly calls `authViewModel.signInWithGoogle(context)`.
 - **Google Web Client ID Configuration**: Corrected a misconfiguration of the `GOOGLE_WEB_CLIENT_ID` in `local.properties`, ensuring it matches the Web OAuth client ID from `google-services.json`, which resolved the `[28444] Developer console is not set up correctly` error.
 
+### 📖 Documentation
+- **README.md**: Added a new 'docs/images/' directory and included four UI screenshots (UI01.png, UI02.png, UI03.png, UI04.png) to showcase the application's interface.
+- **README.md**: Restructured the document to display the UI screenshots section more prominently, immediately after the initial project description, for better visual appeal and user engagement.
+- **README.md**: Ensured all newly added text for the screenshots section is in English, consistent with the rest of the document.
+
 ## [1.1.4] - 2025-06-09
 
 ### 🐛 Fixed
