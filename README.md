@@ -56,7 +56,7 @@ Overview of the PromptFlow user interface on different devices and orientations:
 ### 📚 **Text Library Management**
 - **Local Storage**: Save texts locally when not signed in
 - **Google Drive Integration**: Cloud storage and sync across devices *(UI ready, API implementation pending)*
-- **Easy Text Management**: Create, select, and delete saved texts
+- **Full Text Management**: Create, edit, select, and delete saved texts
 - **Automatic Migration**: Local texts migrate to cloud when signing in
 
 ### 🔐 **Authentication & Sync**
@@ -73,6 +73,7 @@ Overview of the PromptFlow user interface on different devices and orientations:
 - **Error Handling**: User-friendly error messages with recovery options
 - **Text Overflow Handling**: Smart text truncation with ellipsis for long labels
 - **Responsive Text Sizing**: Automatic font scaling for different screen densities
+- **Comprehensive Settings Screen**: Manage editor preferences, app settings, and user account.
 
 ## 📱 Device Support
 
@@ -184,19 +185,20 @@ The app now supports orientation changes with `android:configChanges="orientatio
 
 ## 🎯 Roadmap
 
-### ✅ v1.1.0 (Current)
+### ✅ Recently Added / Current Focus (Post v1.1.5)
 - [x] **Multi-orientation support** with adaptive layouts
 - [x] **Tablet optimization** with side controls and NavigationRail
 - [x] **Responsive design** for different screen sizes
 - [x] **Improved Spanish localization** for interface elements
 - [x] **Enhanced teleprompter controls** with better positioning
+- [x] **Text Editing Functionality**: Edit title and content of saved texts.
+- [x] **Comprehensive Settings Screen**: Access editor, app, and account settings.
 
-### 🚧 v1.2.0 (Next Release)
+### 🚧 Next Steps / Future Enhancements
 - [ ] **Real Google Drive API integration**
-- [ ] **Edit existing texts functionality**
-- [ ] **Search and filter in library**
+- [ ] **Search and filter in text library**
 - [ ] **Text sharing capabilities**
-- [ ] **Advanced teleprompter settings**
+- [ ] **Advanced teleprompter settings** (e.g., custom themes, remote control)
 - [ ] **Vertical slider controls** for tablet portrait mode
 
 ### 🔮 v2.0.0 (Future)

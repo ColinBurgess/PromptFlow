@@ -41,7 +41,6 @@ import androidx.compose.foundation.clickable
 fun SettingsScreen(
     user: FirebaseUser?,
     onBackPressed: () -> Unit,
-    onTextSelected: (String) -> Unit,
     onLoginRequest: () -> Unit,
     onLogoutRequest: () -> Unit,
     currentText: String,
@@ -54,9 +53,8 @@ fun SettingsScreen(
     textLibraryViewModel: TextLibraryViewModel = viewModel()
 ) {
     val authState by authViewModel.authState.collectAsState()
-    val textLibraryState by textLibraryViewModel.state.collectAsState()
 
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) } // Default to Editor tab
     var showSaveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf<SavedText?>(null) }
 
@@ -67,10 +65,9 @@ fun SettingsScreen(
     val isTablet = screenWidth > 600.dp
 
     val tabs = listOf(
-        stringResource(id = R.string.editor) to Icons.Default.Edit,
-        stringResource(id = R.string.settings) to Icons.Default.Settings,
-        stringResource(id = R.string.library) to Icons.Default.LibraryBooks,
-        stringResource(id = R.string.account) to Icons.Default.AccountCircle
+        stringResource(id = R.string.editor) to Icons.Default.Edit,       // Index 0
+        stringResource(id = R.string.settings) to Icons.Default.Settings,    // Index 1
+        stringResource(id = R.string.account) to Icons.Default.AccountCircle // Index 2
     )
 
     
@@ -139,9 +136,6 @@ fun SettingsScreen(
                 currentFontSize = currentFontSize,
                 onFontSizeChanged = onFontSizeChanged,
                 user = user,
-                textLibraryState = textLibraryState,
-                onTextSelected = onTextSelected,
-                onDeleteText = { showDeleteDialog = it },
                 textLibraryViewModel = textLibraryViewModel,
                 onShowSaveDialog = { showSaveDialog = true },
                 authState = authState,
@@ -163,9 +157,6 @@ fun SettingsScreen(
                 currentFontSize = currentFontSize,
                 onFontSizeChanged = onFontSizeChanged,
                 user = user,
-                textLibraryState = textLibraryState,
-                onTextSelected = onTextSelected,
-                onDeleteText = { showDeleteDialog = it },
                 textLibraryViewModel = textLibraryViewModel,
                 onShowSaveDialog = { showSaveDialog = true },
                 authState = authState,
@@ -178,7 +169,7 @@ fun SettingsScreen(
 
     // Dialogs
     if (showSaveDialog) {
-        SaveTextDialog(
+        EditorSaveTextDialog(
             onSave = { title, content ->
                 textLibraryViewModel.saveText(title, content)
                 showSaveDialog = false
@@ -222,9 +213,6 @@ private fun TabletLandscapeLayout(
     currentFontSize: Float,
     onFontSizeChanged: (Float) -> Unit,
     user: FirebaseUser?,
-    textLibraryState: com.promptflow.android.viewmodel.TextLibraryState,
-    onTextSelected: (String) -> Unit,
-    onDeleteText: (SavedText) -> Unit,
     textLibraryViewModel: TextLibraryViewModel,
     onShowSaveDialog: () -> Unit,
     authState: com.promptflow.android.viewmodel.AuthState,
@@ -323,15 +311,8 @@ private fun TabletLandscapeLayout(
                     currentFontSize = currentFontSize,
                     onFontSizeChanged = onFontSizeChanged
                 )
-                2 -> LibraryTabHorizontal(
-                    user = user,
-                    textLibraryState = textLibraryState,
-                    onTextSelected = onTextSelected,
-                    onDeleteText = onDeleteText,
-                    textLibraryViewModel = textLibraryViewModel,
-                    onShowSaveDialog = onShowSaveDialog
-                )
-                3 -> AccountTabHorizontal(
+                // Case 2 (Library) is removed
+                2 -> AccountTabHorizontal(
                     user = user,
                     authState = authState,
                     authViewModel = authViewModel,
@@ -490,151 +471,6 @@ private fun DefaultsTabHorizontal(
                             Text("${size.toInt()}", fontSize = 10.sp)
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LibraryTabHorizontal(
-    user: FirebaseUser?,
-    textLibraryState: com.promptflow.android.viewmodel.TextLibraryState,
-    onTextSelected: (String) -> Unit,
-    onDeleteText: (SavedText) -> Unit,
-    textLibraryViewModel: TextLibraryViewModel,
-    onShowSaveDialog: () -> Unit
-) {
-    // Use the existing LibraryTab but with horizontal padding optimization
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Get all texts (local + cloud)
-        val allTexts = textLibraryViewModel.getAllTexts()
-
-        // Compact storage info for horizontal layout
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            if (user == null) {
-                Card(
-                    modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Storage, null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Almacenamiento Local",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            } else {
-                Card(
-                    modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Cloud, null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Google Drive",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-
-            Button(
-                onClick = { onShowSaveDialog() }
-            ) {
-                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(id = R.string.action_save))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        when {
-            textLibraryState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(100.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            allTexts.isEmpty() -> {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(Icons.Default.LibraryBooks, null, modifier = Modifier.size(32.dp))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(id = R.string.library_empty),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(id = R.string.library_add_first_text_prompt),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            else -> {
-                // Grid layout for horizontal space efficiency
-                val columns = 2
-                val chunkedTexts = allTexts.chunked(columns)
-
-                chunkedTexts.forEach { rowTexts ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        rowTexts.forEach { savedText ->
-                            Box(modifier = Modifier.weight(1f)) {
-                                LibraryTextItem(
-                                    savedText = savedText,
-                                    onTextClick = { onTextSelected(savedText.content) },
-                                    onDeleteClick = { onDeleteText(savedText) }
-                                )
-                            }
-                        }
-                        // Fill empty spaces in incomplete rows
-                        repeat(columns - rowTexts.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -818,9 +654,6 @@ private fun TraditionalTabLayout(
     currentFontSize: Float,
     onFontSizeChanged: (Float) -> Unit,
     user: FirebaseUser?,
-    textLibraryState: com.promptflow.android.viewmodel.TextLibraryState,
-    onTextSelected: (String) -> Unit,
-    onDeleteText: (SavedText) -> Unit,
     textLibraryViewModel: TextLibraryViewModel,
     onShowSaveDialog: () -> Unit,
     authState: com.promptflow.android.viewmodel.AuthState,
@@ -857,15 +690,8 @@ private fun TraditionalTabLayout(
                 currentFontSize = currentFontSize,
                 onFontSizeChanged = onFontSizeChanged
             )
-            2 -> LibraryTab(
-                user = user,
-                textLibraryState = textLibraryState,
-                onTextSelected = onTextSelected,
-                onDeleteText = onDeleteText,
-                textLibraryViewModel = textLibraryViewModel,
-                onShowSaveDialog = onShowSaveDialog
-            )
-            3 -> AccountTab(
+            // Case 2 (Library) is removed
+            2 -> AccountTab(
                 user = user,
                 authState = authState,
                 authViewModel = authViewModel,
@@ -1010,236 +836,6 @@ private fun DefaultsTab(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LibraryTab(
-    user: FirebaseUser?,
-    textLibraryState: com.promptflow.android.viewmodel.TextLibraryState,
-    onTextSelected: (String) -> Unit,
-    onDeleteText: (SavedText) -> Unit,
-    textLibraryViewModel: TextLibraryViewModel = viewModel(),
-    onShowSaveDialog: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Get all texts (local + cloud)
-        val allTexts = textLibraryViewModel.getAllTexts()
-
-        // Show info about storage location
-        if (user == null) {
-            // Local storage info
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Storage,
-                        contentDescription = "Local Storage",
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = stringResource(id = R.string.storage_local),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = stringResource(id = R.string.local_storage_info),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        } else {
-            // Cloud storage info
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Cloud,
-                        contentDescription = "Google Drive Storage",
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = stringResource(id = R.string.storage_google_drive),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            text = stringResource(id = R.string.google_drive_sync_info),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        when {
-            textLibraryState.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            allTexts.isEmpty() -> {
-                // IMPROVED EMPTY STATE - More clear and helpful
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                Icons.Default.LibraryBooks,
-                                contentDescription = "Empty Library",
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = if (user == null)
-                                    stringResource(id = R.string.library_empty_local_title)
-                                else
-                                    stringResource(id = R.string.library_empty),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = if (user == null)
-                                    stringResource(id = R.string.library_empty_prompt_local)
-                                else
-                                    stringResource(id = R.string.library_empty_prompt_drive),
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Call to action button
-                            Button(
-                                onClick = { onShowSaveDialog() },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(id = R.string.add_first_text_button))
-                            }
-                        }
-                    }
-
-                    // Helpful tips card - more compact for horizontal layout
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp)
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.tips_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = stringResource(id = R.string.tip_use_editor) + "\n" +
-                                      stringResource(id = R.string.tip_save_frequent_texts) + "\n" +
-                                      stringResource(id = R.string.tip_custom_title),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-
-            else -> {
-                // Text list - now in a Column instead of LazyColumn for better scroll compatibility
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    allTexts.forEach { savedText ->
-                        LibraryTextItem(
-                            savedText = savedText,
-                            onTextClick = { onTextSelected(savedText.content) },
-                            onDeleteClick = { onDeleteText(savedText) }
-                        )
-                    }
-                }
-            }
-        }
-
-        // Error Message
-        textLibraryState.error?.let { error ->
-            Spacer(modifier = Modifier.height(16.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Text(
-                    text = error,
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-
-        // Add extra space at bottom for better scrolling
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -1647,70 +1243,11 @@ private fun BenefitItem(
     }
 }
 
-@Composable
-private fun LibraryTextItem(
-    savedText: SavedText,
-    onTextClick: () -> Unit,
-    onDeleteClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        onClick = onTextClick
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = savedText.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    // Storage indicator
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        if (savedText.isLocal) Icons.Default.Storage else Icons.Default.Cloud,
-                        contentDescription = if (savedText.isLocal) "Local" else "Cloud",
-                        modifier = Modifier.size(16.dp),
-                        tint = if (savedText.isLocal)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.secondary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = savedText.content,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            IconButton(onClick = onDeleteClick) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-    }
-}
+// Orphaned code from old LibraryTextItem was here and has been removed.
+// The incorrect EditorSaveTextDialog definition that contained old LibraryTextItem code has been removed.
 
 @Composable
-private fun SaveTextDialog(
+private fun EditorSaveTextDialog(
     onSave: (String, String) -> Unit,
     onDismiss: () -> Unit
 ) {

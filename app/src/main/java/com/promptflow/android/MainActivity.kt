@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import com.promptflow.android.ui.screen.LoginScreen
 import com.promptflow.android.ui.screen.TeleprompterScreen
 import com.promptflow.android.ui.screen.SettingsScreen
+import com.promptflow.android.ui.screen.TextLibraryScreen // Added import
 import com.promptflow.android.ui.theme.PromptFlowTheme
 import com.promptflow.android.viewmodel.AuthenticationViewModel
 import com.promptflow.android.viewmodel.TextLibraryViewModel
@@ -75,11 +76,12 @@ fun PromptFlowApp() {
         ) {
             NavHost(
                 navController = navController,
-                startDestination = "teleprompter"
+                startDestination = "library"
             ) {
                 composable("teleprompter") {
                     TeleprompterScreen(
                         onShowSettings = { navController.navigate("settings") },
+                        onShowLibrary = { navController.navigate("library") }, // Navigate to library
                         initialText = currentText,
                         initialSpeed = currentSpeed,
                         initialFontSize = currentFontSize,
@@ -93,10 +95,6 @@ fun PromptFlowApp() {
                     SettingsScreen(
                         user = authState.user,
                         onBackPressed = { navController.popBackStack() },
-                        onTextSelected = { text ->
-                            currentText = text
-                            navController.popBackStack()
-                        },
                         onLoginRequest = { authViewModel.signInWithGoogle(context) },
                         onLogoutRequest = {
                             authViewModel.signOut()
@@ -110,6 +108,18 @@ fun PromptFlowApp() {
                         onFontSizeChanged = { currentFontSize = it },
                         authViewModel = authViewModel,
                         textLibraryViewModel = textLibraryViewModel
+                    )
+                }
+
+                composable("library") {
+                    TextLibraryScreen(
+                        textLibraryViewModel = textLibraryViewModel,
+                        onBackPressed = { navController.popBackStack() },
+                        onTextSelected = { text ->
+                            currentText = text
+                            navController.navigate("teleprompter")
+                        },
+                        onNavigateToEditor = { navController.navigate("settings") } // Navigate to settings for editor
                     )
                 }
             }

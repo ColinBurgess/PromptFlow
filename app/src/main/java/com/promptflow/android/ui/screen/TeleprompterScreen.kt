@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun TeleprompterScreen(
     onShowSettings: () -> Unit,  // Updated to show full settings screen
+    onShowLibrary: () -> Unit, // Callback to show the text library
     initialText: String = sampleText,     // Allow passing text from settings
     initialSpeed: Float = 8f,             // Allow passing speed from settings
     initialFontSize: Float = 24f,         // Allow passing font size from settings
@@ -140,6 +141,7 @@ fun TeleprompterScreen(
             onSettingsClick = {
                 if (!isPlaying) onShowSettings()
             },
+            onShowLibrary = { if (!isPlaying) onShowLibrary() },
             onToggleControls = {
                 if (isPlaying) showControls = !showControls
             }
@@ -160,6 +162,7 @@ fun TeleprompterScreen(
             onSettingsClick = {
                 if (!isPlaying) onShowSettings()
             },
+            onShowLibrary = { if (!isPlaying) onShowLibrary() },
             onToggleControls = {
                 if (isPlaying) showControls = !showControls
             }
@@ -180,6 +183,7 @@ private fun LandscapeLayout(
     onFontSizeChange: (Float) -> Unit,
     onResetClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onShowLibrary: () -> Unit, // New callback
     onToggleControls: () -> Unit
 ) {
     Box(
@@ -277,13 +281,9 @@ private fun LandscapeLayout(
                             contentDescription = stringResource(R.string.content_desc_reset_position),
                             tint = Color.White
                         )
-                    }
-
-                    // Settings button
-                    IconButton(onClick = onSettingsClick) {
                         Icon(
-                            Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.settings),
+                            Icons.Default.LibraryBooks,
+                            contentDescription = stringResource(id = R.string.library),
                             tint = if (isPlaying) Color.Gray else Color.White
                         )
                     }
@@ -306,6 +306,7 @@ private fun PortraitTabletLayout(
     onFontSizeChange: (Float) -> Unit,
     onResetClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onShowLibrary: () -> Unit, // New callback
     onToggleControls: () -> Unit
 ) {
     Box(
@@ -401,6 +402,18 @@ private fun PortraitTabletLayout(
                                 Icons.Default.Settings,
                                 contentDescription = "Settings",
                                 tint = if (isPlaying) Color.Gray else Color.White,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onShowLibrary,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.LibraryBooks,
+                                contentDescription = stringResource(id = R.string.library),
+                                tint = if (isPlaying) Color.Gray else Color.White, // Consistent tint logic
                                 modifier = Modifier.size(32.dp)
                             )
                         }

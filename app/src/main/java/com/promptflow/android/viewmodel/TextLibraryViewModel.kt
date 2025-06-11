@@ -48,7 +48,7 @@ class TextLibraryViewModel : ViewModel() {
         loadSavedTexts()
 
         // Initialize Drive access if user is signed in
-        auth.currentUser?.let { user ->
+        auth.currentUser?.let { _ ->
             initializeDriveAccess(context)
         }
     }
@@ -60,14 +60,12 @@ class TextLibraryViewModel : ViewModel() {
                 if (account != null) {
                     // For simplicity, we'll implement this step by step
                     // First, let's focus on local storage and add Drive later
-                    println("✅ Google account found: ${account.email}")
 
                     // TODO: Implement Drive access token retrieval
                     // For now, we'll simulate having Drive access
                     loadTextsFromDrive()
                 }
             } catch (e: Exception) {
-                println("❌ Error initializing Drive access: ${e.message}")
                 _state.value = _state.value.copy(
                     error = "error_drive_connect"
                 )
@@ -90,10 +88,8 @@ class TextLibraryViewModel : ViewModel() {
                     error = null
                 )
 
-                println("✅ Loaded ${texts.size} texts from Google Drive")
 
             } catch (e: Exception) {
-                println("❌ Error loading texts from Drive: ${e.message}")
                 _state.value = _state.value.copy(
                     isLoading = false,
                     error = "error_drive_load"
@@ -159,10 +155,8 @@ class TextLibraryViewModel : ViewModel() {
                     error = null
                 )
 
-                println("✅ Text saved (currently locally, Drive integration coming): $title")
 
             } catch (e: Exception) {
-                println("❌ Error saving to Drive: ${e.message}")
                 _state.value = _state.value.copy(
                     isLoading = false,
                     error = "Error guardando en Google Drive: ${e.message}"
@@ -192,11 +186,80 @@ class TextLibraryViewModel : ViewModel() {
 
                 _state.value = _state.value.copy(localTexts = currentTexts)
 
-                println("✅ Text saved locally: $title")
 
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     error = "Error guardando texto localmente: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun editText(textId: String, newTitle: String, newContent: String) {
+        val allTexts = getAllTexts()
+        val textToEdit = allTexts.find { it.id == textId }
+
+        when {
+            textToEdit == null -> {
+                _state.value = _state.value.copy(error = "Texto no encontrado")
+                return
+            }
+            textToEdit.isLocal -> editLocalText(textId, newTitle, newContent)
+            else -> editTextInDrive(textId, newTitle, newContent)
+        }
+    }
+
+    private fun editLocalText(textId: String, newTitle: String, newContent: String) {
+        sharedPrefs?.let { prefs ->
+            try {
+                val jsonString = prefs.getString("saved_texts", "[]") ?: "[]"
+                val type = object : TypeToken<MutableList<SavedText>>() {}.type
+                val currentTexts: MutableList<SavedText> = gson.fromJson(jsonString, type) ?: mutableListOf()
+
+                val textIndex = currentTexts.indexOfFirst { it.id == textId }
+                if (textIndex != -1) {
+                    val updatedText = currentTexts[textIndex].copy(
+                        title = newTitle,
+                        content = newContent,
+                        updatedAt = Date()
+                    )
+                    currentTexts[textIndex] = updatedText
+
+                    val updatedJsonString = gson.toJson(currentTexts)
+                    prefs.edit().putString("saved_texts", updatedJsonString).apply()
+
+                    _state.value = _state.value.copy(localTexts = currentTexts)
+
+                } else {
+                    _state.value = _state.value.copy(error = "Texto no encontrado en almacenamiento local")
+                }
+
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    error = "Error editando texto localmente: ${e.message}"
+                )
+            }
+        }
+    }
+
+    private fun editTextInDrive(textId: String, newTitle: String, newContent: String) {
+        viewModelScope.launch {
+            try {
+                _state.value = _state.value.copy(isLoading = true)
+
+                // For now, fall back to local editing
+                // TODO: Implement actual Drive API calls
+                editLocalText(textId, newTitle, newContent)
+
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = null
+                )
+
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = "Error editando texto en Drive: ${e.message}"
                 )
             }
         }
@@ -245,10 +308,8 @@ class TextLibraryViewModel : ViewModel() {
 
                 _state.value = _state.value.copy(savedTexts = currentTexts)
 
-                println("✅ Text deleted from Google Drive")
 
             } catch (e: Exception) {
-                println("❌ Error deleting from Drive: ${e.message}")
                 _state.value = _state.value.copy(
                     error = "Error eliminando de Google Drive: ${e.message}"
                 )
@@ -285,10 +346,8 @@ class TextLibraryViewModel : ViewModel() {
                 // Clear local texts after migration
                 sharedPrefs?.edit()?.remove("saved_texts")?.apply()
 
-                println("✅ Migrated ${localTexts.size} texts to cloud (simulated)")
 
             } catch (e: Exception) {
-                println("❌ Error migrating texts: ${e.message}")
                 _state.value = _state.value.copy(
                     isLoading = false,
                     error = "Error migrando textos a Google Drive: ${e.message}"

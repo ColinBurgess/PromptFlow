@@ -19,142 +19,13 @@ import com.promptflow.android.viewmodel.TextLibraryViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TextLibraryScreen(
-    onTextSelected: (String) -> Unit,
-    onBackPressed: () -> Unit,
-    textLibraryViewModel: TextLibraryViewModel = viewModel()
-) {
-    val state by textLibraryViewModel.state.collectAsState()
-    var showSaveDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf<SavedText?>(null) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackPressed) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Text(
-                text = "Text Library",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            IconButton(onClick = { showSaveDialog = true }) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add New Text",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Content
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            state.savedTexts.isEmpty() -> {
-                EmptyLibraryMessage(onAddText = { showSaveDialog = true })
-            }
-
-            else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(state.savedTexts) { savedText ->
-                        TextItem(
-                            savedText = savedText,
-                            onTextClick = { onTextSelected(savedText.content) },
-                            onDeleteClick = { showDeleteDialog = savedText }
-                        )
-                    }
-                }
-            }
-        }
-
-        // Error Message
-        state.error?.let { error ->
-            Spacer(modifier = Modifier.height(16.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Text(
-                    text = error,
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-    }
-
-    // Save Dialog
-    if (showSaveDialog) {
-        SaveTextDialog(
-            onSave = { title, content ->
-                textLibraryViewModel.saveText(title, content)
-                showSaveDialog = false
-            },
-            onDismiss = { showSaveDialog = false }
-        )
-    }
-
-    // Delete Confirmation Dialog
-    showDeleteDialog?.let { textToDelete ->
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Delete Text") },
-            text = { Text("Are you sure you want to delete '${textToDelete.title}'?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        textLibraryViewModel.deleteText(textToDelete.id)
-                        showDeleteDialog = null
-                    }
-                ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-}
+// Helper functions defined at the top of the file
 
 @Composable
-private fun TextItem(
+fun TextItem(
     savedText: SavedText,
     onTextClick: () -> Unit,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -206,12 +77,22 @@ private fun TextItem(
                     )
                 }
 
-                IconButton(onClick = onDeleteClick) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+                Row {
+                    IconButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    
+                    IconButton(onClick = onDeleteClick) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
@@ -219,7 +100,7 @@ private fun TextItem(
 }
 
 @Composable
-private fun EmptyLibraryMessage(onAddText: () -> Unit) {
+fun EmptyLibraryMessage(onAddText: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -265,7 +146,7 @@ private fun EmptyLibraryMessage(onAddText: () -> Unit) {
 }
 
 @Composable
-private fun SaveTextDialog(
+fun SaveTextDialog(
     onSave: (String, String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -317,3 +198,213 @@ private fun SaveTextDialog(
         }
     )
 }
+
+@Composable
+fun EditTextDialog(
+    savedText: SavedText,
+    onSave: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var title by remember { mutableStateOf(savedText.title) }
+    var content by remember { mutableStateOf(savedText.content) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Text") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = content,
+                    onValueChange = { content = it },
+                    label = { Text("Content") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    maxLines = 5
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (title.isNotBlank() && content.isNotBlank()) {
+                        onSave(title.trim(), content.trim())
+                    }
+                },
+                enabled = title.isNotBlank() && content.isNotBlank()
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TextLibraryScreen(
+    onTextSelected: (String) -> Unit,
+    onBackPressed: () -> Unit,
+    onNavigateToEditor: () -> Unit, // New parameter for FAB action
+    textLibraryViewModel: TextLibraryViewModel = viewModel()
+) {
+    val state by textLibraryViewModel.state.collectAsState()
+    var showSaveDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf<SavedText?>(null) }
+    var showEditDialog by remember { mutableStateOf<SavedText?>(null) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Library") },
+                navigationIcon = {
+                    IconButton(onClick = onBackPressed) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showSaveDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Add New Text")
+            }
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it) // Use padding from Scaffold
+                .padding(16.dp) // Original padding for content
+        ) {
+        // Header is now part of TopAppBar and FAB
+
+        // Content
+        when {
+            state.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            state.error != null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = state.error ?: "Error desconocido",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+
+            state.savedTexts.isEmpty() && state.localTexts.isEmpty() -> {
+                EmptyLibraryMessage(onAddText = { showSaveDialog = true })
+            }
+
+            else -> {
+                val allTexts = (state.savedTexts + state.localTexts).sortedByDescending { it.updatedAt }
+                if (allTexts.isEmpty()) {
+                    EmptyLibraryMessage(onAddText = { showSaveDialog = true })
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(allTexts) { savedText ->
+                            TextItem(
+                                savedText = savedText,
+                                onTextClick = { onTextSelected(savedText.content) },
+                                onEditClick = { showEditDialog = savedText },
+                                onDeleteClick = { showDeleteDialog = savedText }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Error Message
+        state.error?.let { error ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = error,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+    }
+
+    // Save Dialog
+    if (showSaveDialog) {
+        SaveTextDialog(
+            onSave = { title, content ->
+                textLibraryViewModel.saveText(title, content)
+                showSaveDialog = false
+            },
+            onDismiss = { showSaveDialog = false }
+        )
+    }
+
+    // Edit Dialog
+    showEditDialog?.let { textToEdit ->
+        EditTextDialog(
+            savedText = textToEdit,
+            onSave = { title, content ->
+                textLibraryViewModel.editText(textToEdit.id, title, content)
+                showEditDialog = null
+            },
+            onDismiss = { showEditDialog = null }
+        )
+    }
+
+    // Delete Confirmation Dialog
+    showDeleteDialog?.let { textToDelete ->
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = null },
+            title = { Text("Delete Text") },
+            text = { Text("Are you sure you want to delete '${textToDelete.title}'?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        textLibraryViewModel.deleteText(textToDelete.id)
+                        showDeleteDialog = null
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+// Scaffold content lambda closed on the previous line.
+} // Closes Scaffold content lambda
+} // Closes TextLibraryScreen

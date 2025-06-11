@@ -1,7 +1,7 @@
 # PromptFlow - Project Context
 
 **Document Version: 1.1**
-**Last Updated:** June 6, 2025
+**Last Updated:** June 11, 2025
 
 ## 1. 📱 Project Overview
 
@@ -11,6 +11,8 @@ PromptFlow is a professional Android teleprompter application with cloud synchro
 ### 1.2. Key Features
 
 #### ✅ **Implemented and Working**
+-   **Settings Screen**: Comprehensive settings section with Editor, App Settings, and Account tabs.
+-   **Text Editing**: Users can edit the title and content of existing texts. Local editing is fully functional; Google Drive editing currently updates the local copy (full Drive API integration pending).
 -   **Teleprompter Core**: Smooth text scrolling with speed controls (1x-25x) and font size (16sp-48sp).
 -   **Optimized Multi-Orientation**: Full support for horizontal and vertical orientation with device-specific adaptive layouts.
 -   **Optimized Horizontal Layout**: Compact TopAppBar (48dp), side tabs without cut-off text, elimination of blank spaces.
@@ -42,11 +44,11 @@ PromptFlow is a professional Android teleprompter application with cloud synchro
     -   ✅ Simulation of local → cloud migration.
     -   ❌ Real Google Drive API pending.
     -   ❌ Creation of .txt files in Drive pending.
+    -   ⚠️ Editing of Drive files currently modifies the local copy (full Drive API integration pending).
 
 #### 📋 **Pending Implementation**
 -   **Real Google Drive API**: Full implementation of upload/download of .txt files.
 -   **Bidirectional Synchronization**: Detection of changes between devices.
--   **Text Editing**: Functionality to edit existing texts.
 -   **Search**: Filtering of texts in the library.
 -   **Export/Import**: Functions for backup and restore.
 -   **Vertical Controls**: Custom vertical sliders for tablets in vertical mode.

@@ -5,6 +5,22 @@ All notable changes to PromptFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2025-06-11
+
+### Added
+- **Settings Screen:** Introduced a new comprehensive settings section with three tabs:
+    - Editor: Configure default font size and scroll speed.
+    - App Settings: Placeholders for theme and language settings.
+    - Account: Manage user sign-in and view account status.
+- **Text Editing:** Users can now edit the title and content of existing texts in the library.
+    - Local text editing is fully functional.
+    - Google Drive text editing currently updates local copy (full Drive API integration pending).
+
+### Changed
+- Improved text display logic in the Text Library, particularly for local and Google Drive texts.
+- Enhanced dialog management for save, edit, and delete operations in the Text Library.
+- Added clearer error message display in the Text Library.
+
 ## [1.1.5] - 2025-06-10
 
 ### 🐛 Fixed
