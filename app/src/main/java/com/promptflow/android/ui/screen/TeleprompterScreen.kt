@@ -75,39 +75,43 @@ fun TeleprompterScreen(
     // Auto-scroll effect - SMOOTH TELEPROMPTER WITH PROPER MANUAL SCROLL SYNC
     LaunchedEffect(isPlaying, speed) {
         if (isPlaying) {
+            val delayMillis = 16L // Target ~60 FPS for scroll updates
             while (isPlaying) {
-                delay(16) // ~60 FPS for ultra-smooth scrolling
+                // Check if user is manually scrolling or if another scroll operation is in progress
+                if (listState.isScrollInProgress) {
+                    delay(delayMillis) // Wait for the current scroll to finish or user to stop
+                    continue
+                }
 
-                // Calculate scroll increment based on speed
-                val increment = (speed * 0.5f).toInt()
+                val scrollIncrement = (speed * 0.5f) // Pixels to scroll per frame
+
+                // Ensure scrollIncrement is positive to scroll down (content moves up)
+                if (scrollIncrement <= 0f) {
+                    delay(delayMillis) // If speed is 0 or negative, just wait
+                    continue
+                }
 
                 try {
-                    // Check if user is manually scrolling
-                    if (listState.isScrollInProgress) {
-                        // User is manually scrolling, pause auto-scroll for this frame
-                        continue
+                    // Use listState.scroll to perform a raw scroll by a pixel value.
+                    // This is a suspend function.
+                    listState.scroll {
+                        scrollBy(scrollIncrement)
                     }
-
-                    // Get current scroll position and add increment
-                    val currentOffset = listState.firstVisibleItemScrollOffset
-                    val newOffset = currentOffset + increment
-
-                    // Scroll to the new position
-                    listState.scrollToItem(
-                        index = 0,
-                        scrollOffset = newOffset
-                    )
                 } catch (e: Exception) {
-                    // If there's a conflict, just continue
-                    // This allows manual scroll to work
+                    // Handle exceptions during scroll, e.g., if the list is empty or too short
+                    isPlaying = false // Stop playback on error
+                    break // Exit loop
                 }
 
-                // Check if we've reached the end using the actual scroll position
-                val canScrollForward = listState.canScrollForward
-                if (!canScrollForward) {
+                // Check if we've reached the end of the scrollable content
+                if (!listState.canScrollForward) {
                     isPlaying = false
-                    // Don't reset scroll position, let user manually reset if needed
+                    // No need to break here, the while loop condition (isPlaying) will handle termination
                 }
+
+                // Wait for the next frame before attempting another scroll increment.
+                // This delay controls the speed of the auto-scroll.
+                delay(delayMillis)
             }
         }
     }
@@ -191,35 +195,45 @@ private fun LandscapeLayout(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Main text display - CLICKABLE TO TOGGLE CONTROLS
-        LazyColumn(
-            state = listState,
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp)
-                .padding(
-                    bottom = when {
-                        !isPlaying -> 100.dp  // Paused - show controls
-                        showControls -> 80.dp // Playing with controls visible
-                        else -> 20.dp         // Playing with controls hidden - full screen
-                    }
-                )
-                .clickable { onToggleControls() },
-            contentPadding = PaddingValues(
-                top = if (!isPlaying) 120.dp else 50.dp,
-                bottom = 50.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                // Parent Box already has background. Clickable here covers the whole text area.
+                .clickable(enabled = isPlaying) { onToggleControls() }
         ) {
-            item {
-                Text(
-                    text = text,
-                    color = Color.White,
-                    fontSize = fontSize.sp,
-                    textAlign = TextAlign.Center,
-                    lineHeight = (fontSize * 1.4).sp,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            val lazyColumnHeight = this.maxHeight
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp)
+                    .padding(
+                        bottom = when {
+                            showControls && isPlaying -> 80.dp
+                            showControls && !isPlaying -> 160.dp
+                            else -> 0.dp // No extra padding if controls are hidden
+                        }
+                        // top padding is handled by the Spacer
+                    )
+            ) {
+                item { // This Spacer pushes the actual text content down
+                    Spacer(modifier = Modifier.height(lazyColumnHeight))
+                }
+                item {
+                    Text(
+                        text = text,
+                        fontSize = fontSize.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 32.dp) // Padding at the end of the text itself
+                    )
+                }
+                item { // This Spacer ensures text can scroll completely off the top
+                    Spacer(modifier = Modifier.height(lazyColumnHeight))
+                }
             }
         }
 
@@ -315,34 +329,45 @@ private fun PortraitTabletLayout(
             .background(Color.Black)
     ) {
         // Main text display - full width
-        LazyColumn(
-            state = listState,
+        BoxWithConstraints(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 32.dp)
-                .padding(
-                    bottom = when {
-                        !isPlaying -> 140.dp  // Paused - larger space for controls
-                        showControls -> 100.dp // Playing with controls visible
-                        else -> 20.dp         // Playing with controls hidden
-                    }
-                )
-                .clickable { onToggleControls() },
-            contentPadding = PaddingValues(
-                top = if (!isPlaying) 60.dp else 40.dp,
-                bottom = 40.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxSize() // This Box now takes the full size previously occupied by LazyColumn
+                .clickable(enabled = isPlaying) { onToggleControls() } // Moved clickable here
         ) {
-            item {
-                Text(
-                    text = text,
-                    color = Color.White,
-                    fontSize = fontSize.sp,
-                    textAlign = TextAlign.Left, // Left align for portrait reading
-                    lineHeight = (fontSize * 1.4).sp,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            val lazyColumnHeight = this.maxHeight
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize() // LazyColumn fills the BoxWithConstraints
+                    .padding(horizontal = 32.dp) // Keep horizontal padding
+                    .padding( // Keep original bottom padding logic for controls
+                        bottom = when {
+                            !isPlaying -> 140.dp
+                            showControls -> 100.dp
+                            else -> 0.dp // No extra padding if controls are hidden, Spacer handles top
+                        }
+                    )
+                // Removed contentPadding and verticalArrangement as Spacer and Text padding will manage spacing
+            ) {
+                item { // This Spacer pushes the actual text content down
+                    Spacer(modifier = Modifier.height(lazyColumnHeight))
+                }
+                item {
+                    Text(
+                        text = text,
+                        color = Color.White,
+                        fontSize = fontSize.sp,
+                        textAlign = TextAlign.Left, // Retain TextAlign.Left
+                        lineHeight = (fontSize * 1.4).sp, // Retain lineHeight
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 32.dp) // Consistent bottom padding for the text itself
+                    )
+                }
+                item { // This Spacer ensures text can scroll completely off the top
+                    Spacer(modifier = Modifier.height(lazyColumnHeight))
+                }
             }
         }
 

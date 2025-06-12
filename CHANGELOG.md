@@ -5,6 +5,14 @@ All notable changes to PromptFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2025-06-12
+
+### Improved
+- **Teleprompter Scroll Behavior:**
+    - Text now initiates scrolling from below the visible screen area, providing a more professional start.
+    - Text continues to scroll until it has completely exited the top of the screen before auto-stop.
+    - Corrected scroll mechanism for `LazyListState` to use `scroll { scrollBy() }` for smoother and more accurate pixel-based scrolling.
+
 ## [1.1.6] - 2025-06-11
 
 ### Added

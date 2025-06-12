@@ -34,7 +34,7 @@ Overview of the PromptFlow user interface on different devices and orientations:
 ## ✨ Features
 
 ### 🎬 **Core Teleprompter**
-- **Smooth Auto-Scroll**: Variable speed control (1x-25x)
+- **Professional Auto-Scroll**: Smooth, continuous scroll that starts from off-screen (bottom) and exits completely at the top. Variable speed control (1x-25x).
 - **Adjustable Font Size**: 16sp to 48sp for optimal readability
 - **Professional Controls**: Play/pause, reset, speed adjustment
 - **Adaptive Orientation**: Works seamlessly in both landscape and portrait modes
